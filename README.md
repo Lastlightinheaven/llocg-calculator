@@ -55,14 +55,6 @@ lovelive_calculator/
 └── README.md
 ```
 
-## ✅ การ Verify ความถูกต้อง
-
-รันไฟล์ `test_math.py` เพื่อตรวจสอบว่าการคำนวณตรงกับตัวอย่างใน Google Sheet (90.85%):
-
-```bash
-python test_math.py
-```
-
 ## 🧩 Extend เพิ่มเติม
 
 สถาปัตยกรรมออกแบบให้ extend ได้ง่าย เช่น:
