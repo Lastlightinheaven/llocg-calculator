@@ -1,0 +1,2536 @@
+{
+  "source": "https://llocg-th.vercel.app/cards",
+  "count": 167,
+  "cards": [
+    {
+      "name": "Dream Believers",
+      "card_no": "PL!HS-bp1-019-L",
+      "required_hearts": {
+        "gray": 4
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "Score+1",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!HS-bp1-019-L.png"
+    },
+    {
+      "name": "365 Days",
+      "card_no": "PL!HS-bp1-020-L",
+      "required_hearts": {
+        "gray": 6
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!HS-bp1-020-L.png"
+    },
+    {
+      "name": "Holiday∞Holiday",
+      "card_no": "PL!HS-bp1-021-L",
+      "required_hearts": {
+        "green": 5,
+        "gray": 5
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!HS-bp1-021-L.png"
+    },
+    {
+      "name": "AWOKE",
+      "card_no": "PL!HS-bp1-022-L",
+      "required_hearts": {
+        "blue": 6,
+        "gray": 6
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!HS-bp1-022-L.png"
+    },
+    {
+      "name": "ド！ド！ド！",
+      "card_no": "PL!HS-bp1-023-L",
+      "required_hearts": {
+        "pink": 3,
+        "gray": 2
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!HS-bp1-023-L.png"
+    },
+    {
+      "name": "虹色Passions！",
+      "card_no": "PL!N-bp1-025-L",
+      "required_hearts": {
+        "green": 1,
+        "blue": 1,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!N-bp1-025-L.png"
+    },
+    {
+      "name": "Poppin' Up!",
+      "card_no": "PL!N-bp1-026-L",
+      "required_hearts": {
+        "yellow": 1,
+        "gray": 2
+      },
+      "score": 1,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!N-bp1-026-L.png"
+    },
+    {
+      "name": "Solitude Rain",
+      "card_no": "PL!N-bp1-027-L",
+      "required_hearts": {
+        "blue": 5,
+        "gray": 7
+      },
+      "score": 0,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!N-bp1-027-L.png"
+    },
+    {
+      "name": "Butterfly",
+      "card_no": "PL!N-bp1-028-L",
+      "required_hearts": {
+        "purple": 5,
+        "gray": 7
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!N-bp1-028-L.png"
+    },
+    {
+      "name": "Eutopia",
+      "card_no": "PL!N-bp1-029-L",
+      "required_hearts": {
+        "pink": 5,
+        "gray": 7
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!N-bp1-029-L.png"
+    },
+    {
+      "name": "START!! True dreams",
+      "card_no": "PL!SP-bp1-023-L",
+      "required_hearts": {
+        "red": 1,
+        "yellow": 1,
+        "purple": 1,
+        "gray": 1
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "Score+1",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!SP-bp1-023-L.png"
+    },
+    {
+      "name": "Tiny Stars",
+      "card_no": "PL!SP-bp1-024-L",
+      "required_hearts": {
+        "pink": 1,
+        "blue": 1,
+        "gray": 6
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!SP-bp1-024-L.png"
+    },
+    {
+      "name": "Starlight Prologue",
+      "card_no": "PL!SP-bp1-025-L",
+      "required_hearts": {
+        "yellow": 1,
+        "purple": 1,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!SP-bp1-025-L.png"
+    },
+    {
+      "name": "未来予報ハレルヤ！",
+      "card_no": "PL!SP-bp1-026-L",
+      "required_hearts": {
+        "red": 2,
+        "yellow": 2,
+        "purple": 2,
+        "gray": 2
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!SP-bp1-026-L.png"
+    },
+    {
+      "name": "Sing！Shine！Smile！",
+      "card_no": "PL!SP-bp1-027-L",
+      "required_hearts": {
+        "red": 3,
+        "yellow": 3,
+        "purple": 3,
+        "gray": 5
+      },
+      "score": 6,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック vol.1",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP01/PL!SP-bp1-027-L.png"
+    },
+    {
+      "name": "Bloom the smile, Bloom the dream!",
+      "card_no": "PL!HS-bp2-019-L",
+      "required_hearts": {
+        "pink": 1,
+        "green": 1,
+        "blue": 1,
+        "gray": 1
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "Score+1",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!HS-bp2-019-L.png"
+    },
+    {
+      "name": "Link to the FUTURE",
+      "card_no": "PL!HS-bp2-020-L",
+      "required_hearts": {
+        "pink": 2,
+        "green": 2,
+        "blue": 2,
+        "gray": 8
+      },
+      "score": 0,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!HS-bp2-020-L.png"
+    },
+    {
+      "name": "眩耀夜行",
+      "card_no": "PL!HS-bp2-021-L",
+      "required_hearts": {
+        "green": 7,
+        "gray": 5
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!HS-bp2-021-L.png"
+    },
+    {
+      "name": "アオクハルカ",
+      "card_no": "PL!HS-bp2-022-L",
+      "required_hearts": {
+        "green": 4,
+        "gray": 1
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!HS-bp2-022-L.png"
+    },
+    {
+      "name": "Mirage Voyage",
+      "card_no": "PL!HS-bp2-023-L",
+      "required_hearts": {
+        "blue": 4,
+        "gray": 1
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!HS-bp2-023-L.png"
+    },
+    {
+      "name": "レディバグ",
+      "card_no": "PL!HS-bp2-024-L",
+      "required_hearts": {
+        "blue": 6,
+        "gray": 5
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!HS-bp2-024-L.png"
+    },
+    {
+      "name": "ココン東西",
+      "card_no": "PL!HS-bp2-025-L",
+      "required_hearts": {
+        "pink": 5,
+        "gray": 2
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!HS-bp2-025-L.png"
+    },
+    {
+      "name": "みらくりえーしょん",
+      "card_no": "PL!HS-bp2-026-L",
+      "required_hearts": {
+        "pink": 7,
+        "gray": 7
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!HS-bp2-026-L.png"
+    },
+    {
+      "name": "WATER BLUE NEW WORLD",
+      "card_no": "PL!S-bp2-019-L",
+      "required_hearts": {
+        "red": 3,
+        "green": 3,
+        "blue": 3,
+        "gray": 7
+      },
+      "score": 7,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!S-bp2-019-L.png"
+    },
+    {
+      "name": "DREAMY COLOR",
+      "card_no": "PL!S-bp2-020-L",
+      "required_hearts": {
+        "green": 2,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!S-bp2-020-L.png"
+    },
+    {
+      "name": "未体験HORIZON",
+      "card_no": "PL!S-bp2-021-L",
+      "required_hearts": {
+        "red": 3,
+        "green": 3,
+        "blue": 3,
+        "gray": 2
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!S-bp2-021-L.png"
+    },
+    {
+      "name": "未熟DREAMER",
+      "card_no": "PL!S-bp2-022-L",
+      "required_hearts": {
+        "red": 2,
+        "green": 2,
+        "blue": 2,
+        "gray": 8
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!S-bp2-022-L.png"
+    },
+    {
+      "name": "MY舞☆TONIGHT",
+      "card_no": "PL!S-bp2-023-L",
+      "required_hearts": {
+        "red": 4,
+        "gray": 4
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!S-bp2-023-L.png"
+    },
+    {
+      "name": "君のこころは輝いてるかい？",
+      "card_no": "PL!S-bp2-024-L",
+      "required_hearts": {
+        "blue": 1,
+        "gray": 1
+      },
+      "score": 0,
+      "score_plus": 1,
+      "special_heart": "Score+1",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!S-bp2-024-L.png"
+    },
+    {
+      "name": "青空Jumping Heart",
+      "card_no": "PL!S-bp2-025-L",
+      "required_hearts": {
+        "red": 1,
+        "green": 1,
+        "blue": 1,
+        "gray": 1
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "Score+1",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!S-bp2-025-L.png"
+    },
+    {
+      "name": "ユメ語るよりユメ歌おう",
+      "card_no": "PL!S-bp2-026-L",
+      "required_hearts": {
+        "green": 6,
+        "gray": 3
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!S-bp2-026-L.png"
+    },
+    {
+      "name": "Go!! リスタート",
+      "card_no": "PL!SP-bp2-023-L",
+      "required_hearts": {
+        "red": 1,
+        "yellow": 1,
+        "purple": 1,
+        "gray": 1
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "Score+1",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!SP-bp2-023-L.png"
+    },
+    {
+      "name": "ビタミンSUMMER！",
+      "card_no": "PL!SP-bp2-024-L",
+      "required_hearts": {
+        "red": 1,
+        "yellow": 4,
+        "purple": 1,
+        "gray": 6
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!SP-bp2-024-L.png"
+    },
+    {
+      "name": "Bubble Rise",
+      "card_no": "PL!SP-bp2-025-L",
+      "required_hearts": {
+        "red": 2,
+        "yellow": 2,
+        "purple": 2,
+        "gray": 4
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!SP-bp2-025-L.png"
+    },
+    {
+      "name": "笑顔のPromise",
+      "card_no": "PL!SP-bp2-026-L",
+      "required_hearts": {
+        "yellow": 6,
+        "gray": 3
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!SP-bp2-026-L.png"
+    },
+    {
+      "name": "UNIVERSE!!",
+      "card_no": "PL!SP-bp2-027-L",
+      "required_hearts": {
+        "red": 3,
+        "yellow": 3,
+        "purple": 3,
+        "gray": 7
+      },
+      "score": 7,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック NEXT STEP",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP02/PL!SP-bp2-027-L.png"
+    },
+    {
+      "name": "僕らのLIVE 君とのLIFE",
+      "card_no": "PL!-bp3-019-L",
+      "required_hearts": {
+        "pink": 1,
+        "purple": 1
+      },
+      "score": 0,
+      "score_plus": 1,
+      "special_heart": "スコア",
+      "series": "ラブライブ！",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!-bp3-L-019-L.png"
+    },
+    {
+      "name": "Snow halation",
+      "card_no": "PL!-bp3-020-L",
+      "required_hearts": {
+        "pink": 1,
+        "purple": 1,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!-bp3-L-020-L.png"
+    },
+    {
+      "name": "愛してるばんざーい!",
+      "card_no": "PL!-bp3-021-L",
+      "required_hearts": {
+        "pink": 3,
+        "purple": 4,
+        "gray": 7
+      },
+      "score": 6,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!-bp3-L-021-L.png"
+    },
+    {
+      "name": "ユメノトビラ",
+      "card_no": "PL!-bp3-022-L",
+      "required_hearts": {
+        "pink": 3,
+        "yellow": 3,
+        "purple": 3,
+        "gray": 4
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!-bp3-L-022-L.png"
+    },
+    {
+      "name": "ミはμ'sicのミ",
+      "card_no": "PL!-bp3-023-L",
+      "required_hearts": {
+        "pink": 2,
+        "purple": 2,
+        "gray": 4
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!-bp3-L-023-L.png"
+    },
+    {
+      "name": "夏色えがおで1,2,Jump!",
+      "card_no": "PL!-bp3-024-L",
+      "required_hearts": {
+        "pink": 2,
+        "yellow": 2,
+        "purple": 2
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!-bp3-L-024-L.png"
+    },
+    {
+      "name": "タカラモノズ",
+      "card_no": "PL!-bp3-025-L",
+      "required_hearts": {
+        "pink": 2,
+        "yellow": 2,
+        "purple": 2,
+        "gray": 4
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!-bp3-L-025-L.png"
+    },
+    {
+      "name": "Oh,Love&Peace!",
+      "card_no": "PL!-bp3-026-L",
+      "required_hearts": {
+        "pink": 2,
+        "yellow": 5,
+        "purple": 2,
+        "gray": 6
+      },
+      "score": 6,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!-bp3-L-026-L.png"
+    },
+    {
+      "name": "Awakening Promise",
+      "card_no": "PL!N-bp3-025-L",
+      "required_hearts": {
+        "pink": 1,
+        "red": 5,
+        "yellow": 3,
+        "gray": 4
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!N-bp3-L-025-L.png"
+    },
+    {
+      "name": "サイコーハート",
+      "card_no": "PL!N-bp3-026-L",
+      "required_hearts": {
+        "red": 3,
+        "blue": 1,
+        "gray": 5
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!N-bp3-L-026-L.png"
+    },
+    {
+      "name": "La Bella Patria",
+      "card_no": "PL!N-bp3-027-L",
+      "required_hearts": {
+        "yellow": 2,
+        "green": 2,
+        "gray": 1
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!N-bp3-L-027-L.png"
+    },
+    {
+      "name": "ツナガルコネクト",
+      "card_no": "PL!N-bp3-028-L",
+      "required_hearts": {
+        "yellow": 1,
+        "blue": 1,
+        "purple": 1,
+        "gray": 1
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "スコア",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!N-bp3-L-028-L.png"
+    },
+    {
+      "name": "未来ハーモニー",
+      "card_no": "PL!N-bp3-029-L",
+      "required_hearts": {
+        "yellow": 1,
+        "green": 1,
+        "blue": 1,
+        "gray": 4
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!N-bp3-L-029-L.png"
+    },
+    {
+      "name": "Love U my friends",
+      "card_no": "PL!N-bp3-030-L",
+      "required_hearts": {
+        "pink": 1,
+        "red": 1,
+        "yellow": 1,
+        "green": 1,
+        "blue": 1,
+        "purple": 1
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!N-bp3-L-030-L.png"
+    },
+    {
+      "name": "MONSTER GIRLS",
+      "card_no": "PL!N-bp3-031-L",
+      "required_hearts": {
+        "pink": 1,
+        "yellow": 2,
+        "green": 5,
+        "gray": 6
+      },
+      "score": 6,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!N-bp3-L-031-L.png"
+    },
+    {
+      "name": "THE SECRET NiGHT",
+      "card_no": "PL!N-bp3-032-L",
+      "required_hearts": {
+        "blue": 1,
+        "purple": 1,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!N-bp3-L-032-L.png"
+    },
+    {
+      "name": "MIRACLE WAVE",
+      "card_no": "PL!S-bp3-019-L",
+      "required_hearts": {
+        "red": 4,
+        "green": 4,
+        "blue": 4
+      },
+      "score": 7,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!S-bp3-L-019-L.png"
+    },
+    {
+      "name": "ダイスキだったらダイジョウブ！",
+      "card_no": "PL!S-bp3-020-L",
+      "required_hearts": {
+        "red": 1,
+        "green": 1,
+        "blue": 1
+      },
+      "score": 1,
+      "score_plus": 0,
+      "special_heart": "スコア",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!S-bp3-L-020-L.png"
+    },
+    {
+      "name": "想いよひとつになれ",
+      "card_no": "PL!S-bp3-021-L",
+      "required_hearts": {
+        "red": 3,
+        "green": 3,
+        "blue": 3,
+        "gray": 1
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!S-bp3-L-021-L.png"
+    },
+    {
+      "name": "Fantastic Departure!",
+      "card_no": "PL!S-bp3-022-L",
+      "required_hearts": {
+        "red": 3,
+        "blue": 3,
+        "gray": 6
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!S-bp3-L-022-L.png"
+    },
+    {
+      "name": "KOKORO Magic “A to Z”",
+      "card_no": "PL!S-bp3-023-L",
+      "required_hearts": {
+        "red": 1,
+        "blue": 1,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!S-bp3-L-023-L.png"
+    },
+    {
+      "name": "Deep Resonance",
+      "card_no": "PL!S-bp3-024-L",
+      "required_hearts": {
+        "green": 1,
+        "blue": 3,
+        "gray": 2
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!S-bp3-L-024-L.png"
+    },
+    {
+      "name": "SUKI for you, DREAM for you!",
+      "card_no": "PL!S-bp3-025-L",
+      "required_hearts": {
+        "red": 4,
+        "green": 2,
+        "gray": 6
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック　夏、はじまる。",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!S-bp3-L-025-L.png"
+    },
+    {
+      "name": "Angelic Angel",
+      "card_no": "PL!-bp4-019-L",
+      "required_hearts": {
+        "pink": 2,
+        "yellow": 2,
+        "purple": 2,
+        "gray": 4
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!-bp4-019-L.png"
+    },
+    {
+      "name": "Love wing bell",
+      "card_no": "PL!-bp4-020-L",
+      "required_hearts": {
+        "pink": 3,
+        "yellow": 3,
+        "gray": 2
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!-bp4-020-L.png"
+    },
+    {
+      "name": "?←HEARTBEAT",
+      "card_no": "PL!-bp4-021-L",
+      "required_hearts": {
+        "pink": 2,
+        "yellow": 2,
+        "purple": 2,
+        "gray": 8
+      },
+      "score": 6,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!-bp4-021-L.png"
+    },
+    {
+      "name": "No brand girls",
+      "card_no": "PL!-bp4-022-L",
+      "required_hearts": {
+        "pink": 3,
+        "yellow": 3,
+        "purple": 3,
+        "gray": 9
+      },
+      "score": 7,
+      "score_plus": 2,
+      "special_heart": "スコア",
+      "series": "ラブライブ！",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!-bp4-022-L.png"
+    },
+    {
+      "name": "もぎゅっと\"love\"で接近中！",
+      "card_no": "PL!-bp4-023-L",
+      "required_hearts": {
+        "pink": 2,
+        "yellow": 1,
+        "purple": 1,
+        "gray": 3
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!-bp4-023-L.png"
+    },
+    {
+      "name": "小夜啼鳥恋詩",
+      "card_no": "PL!-bp4-024-L",
+      "required_hearts": {
+        "pink": 2,
+        "yellow": 2,
+        "gray": 1
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!-bp4-024-L.png"
+    },
+    {
+      "name": "微熱からMystery",
+      "card_no": "PL!-bp4-025-L",
+      "required_hearts": {
+        "pink": 3,
+        "purple": 3,
+        "gray": 6
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!-bp4-025-L.png"
+    },
+    {
+      "name": "ダイヤモンドプリンセスの憂鬱",
+      "card_no": "PL!-bp4-026-L",
+      "required_hearts": {
+        "yellow": 1,
+        "purple": 1,
+        "gray": 1
+      },
+      "score": 1,
+      "score_plus": 0,
+      "special_heart": "スコア",
+      "series": "ラブライブ！",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!-bp4-026-L.png"
+    },
+    {
+      "name": "VIVID WORLD",
+      "card_no": "PL!N-bp4-025-L",
+      "required_hearts": {
+        "blue": 8,
+        "purple": 2,
+        "gray": 4
+      },
+      "score": 6,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!N-bp4-025-L.png"
+    },
+    {
+      "name": "DIVE!",
+      "card_no": "PL!N-bp4-026-L",
+      "required_hearts": {
+        "red": 4,
+        "blue": 3,
+        "gray": 5
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!N-bp4-026-L.png"
+    },
+    {
+      "name": "EMOTION",
+      "card_no": "PL!N-bp4-027-L",
+      "required_hearts": {
+        "green": 2,
+        "blue": 1,
+        "gray": 2
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!N-bp4-027-L.png"
+    },
+    {
+      "name": "stars we chase",
+      "card_no": "PL!N-bp4-028-L",
+      "required_hearts": {
+        "pink": 2,
+        "yellow": 2,
+        "gray": 1
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!N-bp4-028-L.png"
+    },
+    {
+      "name": "Rise Up High!",
+      "card_no": "PL!N-bp4-029-L",
+      "required_hearts": {
+        "blue": 2,
+        "gray": 1
+      },
+      "score": 1,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!N-bp4-029-L.png"
+    },
+    {
+      "name": "Daydream Mermaid",
+      "card_no": "PL!N-bp4-030-L",
+      "required_hearts": {
+        "blue": 1,
+        "purple": 3,
+        "gray": 4
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!N-bp4-030-L.png"
+    },
+    {
+      "name": "NEO SKY, NEO MAP!",
+      "card_no": "PL!N-bp4-031-L",
+      "required_hearts": {
+        "pink": 1,
+        "red": 1,
+        "yellow": 1,
+        "green": 1,
+        "blue": 1,
+        "purple": 1,
+        "gray": 12
+      },
+      "score": 8,
+      "score_plus": 0,
+      "special_heart": "スコア",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!N-bp4-031-L.png"
+    },
+    {
+      "name": "Blue!",
+      "card_no": "PL!N-bp4-032-L",
+      "required_hearts": {
+        "pink": 1,
+        "red": 1,
+        "blue": 1,
+        "gray": 4
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!N-bp4-032-L.png"
+    },
+    {
+      "name": "Dazzling Game",
+      "card_no": "PL!SP-bp4-023-L",
+      "required_hearts": {
+        "purple": 11,
+        "gray": 8
+      },
+      "score": 8,
+      "score_plus": 0,
+      "special_heart": "スコア",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!SP-bp4-023-L.png"
+    },
+    {
+      "name": "ノンフィクション!!",
+      "card_no": "PL!SP-bp4-024-L",
+      "required_hearts": {
+        "red": 3,
+        "yellow": 5,
+        "gray": 7
+      },
+      "score": 6,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!SP-bp4-024-L.png"
+    },
+    {
+      "name": "Special Color",
+      "card_no": "PL!SP-bp4-025-L",
+      "required_hearts": {
+        "gray": 7
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!SP-bp4-025-L.png"
+    },
+    {
+      "name": "Wish Song",
+      "card_no": "PL!SP-bp4-026-L",
+      "required_hearts": {
+        "red": 1,
+        "yellow": 1,
+        "purple": 3,
+        "gray": 6
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!SP-bp4-026-L.png"
+    },
+    {
+      "name": "Chance Day, Chance Way!",
+      "card_no": "PL!SP-bp4-027-L",
+      "required_hearts": {
+        "red": 1,
+        "gray": 2
+      },
+      "score": 1,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!SP-bp4-027-L.png"
+    },
+    {
+      "name": "DAISUKI FULL POWER",
+      "card_no": "PL!SP-bp4-028-L",
+      "required_hearts": {
+        "red": 3,
+        "yellow": 3,
+        "gray": 7
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!SP-bp4-028-L.png"
+    },
+    {
+      "name": "追いかける夢の先で",
+      "card_no": "PL!SP-bp4-029-L",
+      "required_hearts": {
+        "yellow": 3,
+        "purple": 3,
+        "gray": 4
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!SP-bp4-029-L.png"
+    },
+    {
+      "name": "Second Sparkle",
+      "card_no": "PL!SP-bp4-030-L",
+      "required_hearts": {
+        "yellow": 2,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック SAPPHIRE MOON",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP04/PL!SP-bp4-030-L.png"
+    },
+    {
+      "name": "Live with a smile!",
+      "card_no": "LL-bp5-001-L",
+      "required_hearts": {
+        "red": 1,
+        "gray": 3
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "スコア",
+      "series": "",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/LL-bp5-001-L.png"
+    },
+    {
+      "name": "Bring the LOVE！",
+      "card_no": "LL-bp5-002-L",
+      "required_hearts": {
+        "pink": 2,
+        "red": 2,
+        "yellow": 1,
+        "gray": 5
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/LL-bp5-002-L.png"
+    },
+    {
+      "name": "Snow halation",
+      "card_no": "PL!-bp3-020-SECL",
+      "required_hearts": {
+        "pink": 1,
+        "purple": 1,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!-bp3-SECL.png"
+    },
+    {
+      "name": "それは僕たちの奇跡",
+      "card_no": "PL!-bp5-019-L",
+      "required_hearts": {
+        "yellow": 1,
+        "purple": 1,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!-bp5-019-L.png"
+    },
+    {
+      "name": "Wonder zone",
+      "card_no": "PL!-bp5-020-L",
+      "required_hearts": {
+        "yellow": 3,
+        "blue": 2,
+        "gray": 7
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!-bp5-020-L.png"
+    },
+    {
+      "name": "SUNNY DAY SONG",
+      "card_no": "PL!-bp5-021-L",
+      "required_hearts": {
+        "pink": 2,
+        "yellow": 3,
+        "purple": 2,
+        "gray": 2
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!-bp5-021-L.png"
+    },
+    {
+      "name": "A song for You! You? You!!",
+      "card_no": "PL!-bp5-022-L",
+      "required_hearts": {
+        "pink": 2,
+        "yellow": 2,
+        "purple": 2,
+        "gray": 6
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!-bp5-022-L.png"
+    },
+    {
+      "name": "乙姫心で恋宮殿",
+      "card_no": "PL!-bp5-023-L",
+      "required_hearts": {
+        "pink": 3,
+        "purple": 2,
+        "gray": 3
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!-bp5-023-L.png"
+    },
+    {
+      "name": "Private Wars",
+      "card_no": "PL!-bp5-024-L",
+      "required_hearts": {
+        "pink": 1,
+        "yellow": 1,
+        "blue": 7,
+        "purple": 1
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!-bp5-024-L.png"
+    },
+    {
+      "name": "Dream Believers",
+      "card_no": "PL!HS-bp1-019-SECL",
+      "required_hearts": {
+        "gray": 4
+      },
+      "score": 1,
+      "score_plus": 0,
+      "special_heart": "スコア",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!HS-bp1-019-SECL.png"
+    },
+    {
+      "name": "Dream Believers（104期Ver.）",
+      "card_no": "PL!HS-bp5-017-L",
+      "required_hearts": {
+        "gray": 8
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!HS-bp5-017-L.png"
+    },
+    {
+      "name": "AURORA FLOWER",
+      "card_no": "PL!HS-bp5-018-L",
+      "required_hearts": {
+        "pink": 3,
+        "green": 3,
+        "blue": 3,
+        "gray": 7
+      },
+      "score": 7,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!HS-bp5-018-L.png"
+    },
+    {
+      "name": "ハナムスビ",
+      "card_no": "PL!HS-bp5-019-L",
+      "required_hearts": {
+        "green": 9,
+        "gray": 5
+      },
+      "score": 6,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!HS-bp5-019-L.png"
+    },
+    {
+      "name": "バアドケージ",
+      "card_no": "PL!HS-bp5-020-L",
+      "required_hearts": {
+        "blue": 2,
+        "gray": 1
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "スコア",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!HS-bp5-020-L.png"
+    },
+    {
+      "name": "ジョーショーキリュー",
+      "card_no": "PL!HS-bp5-021-L",
+      "required_hearts": {
+        "pink": 10
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!HS-bp5-021-L.png"
+    },
+    {
+      "name": "Retrofuture",
+      "card_no": "PL!HS-bp5-022-L",
+      "required_hearts": {
+        "pink": 1,
+        "green": 1,
+        "blue": 1,
+        "purple": 5,
+        "gray": 2
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!HS-bp5-022-L.png"
+    },
+    {
+      "name": "ツナガルコネクト",
+      "card_no": "PL!N-bp3-028-SECL",
+      "required_hearts": {
+        "yellow": 1,
+        "blue": 1,
+        "purple": 1,
+        "gray": 1
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "score",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!N-bp3-028-SECL.png"
+    },
+    {
+      "name": "SINGING, DREAMING, NOW!",
+      "card_no": "PL!N-bp5-025-L",
+      "required_hearts": {
+        "pink": 1,
+        "red": 1,
+        "yellow": 1,
+        "gray": 4
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!N-bp5-025-L.png"
+    },
+    {
+      "name": "TOKIMEKI Runners",
+      "card_no": "PL!N-bp5-026-L",
+      "required_hearts": {
+        "yellow": 2,
+        "gray": 4
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!N-bp5-026-L.png"
+    },
+    {
+      "name": "ミラクル STAY TUNE！",
+      "card_no": "PL!N-bp5-027-L",
+      "required_hearts": {
+        "yellow": 2,
+        "blue": 2,
+        "purple": 1,
+        "gray": 7
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!N-bp5-027-L.png"
+    },
+    {
+      "name": "CHASE!",
+      "card_no": "PL!N-bp5-028-L",
+      "required_hearts": {
+        "red": 2,
+        "blue": 1
+      },
+      "score": 1,
+      "score_plus": 2,
+      "special_heart": "スコア",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!N-bp5-028-L.png"
+    },
+    {
+      "name": "無敵級*ビリーバー",
+      "card_no": "PL!N-bp5-029-L",
+      "required_hearts": {
+        "yellow": 4,
+        "green": 1,
+        "blue": 1,
+        "purple": 1,
+        "gray": 10
+      },
+      "score": 7,
+      "score_plus": 0,
+      "special_heart": "スコア",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!N-bp5-029-L.png"
+    },
+    {
+      "name": "繚乱！ビクトリーロード",
+      "card_no": "PL!N-bp5-030-L",
+      "required_hearts": {
+        "pink": 1,
+        "red": 1,
+        "yellow": 1,
+        "green": 1,
+        "blue": 1,
+        "purple": 1,
+        "gray": 7
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!N-bp5-030-L.png"
+    },
+    {
+      "name": "not ALONE not HITORI",
+      "card_no": "PL!S-bp5-019-L",
+      "required_hearts": {
+        "green": 2,
+        "blue": 4,
+        "gray": 6
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!S-bp5-019-L.png"
+    },
+    {
+      "name": "Landing action Yeah!!",
+      "card_no": "PL!S-bp5-020-L",
+      "required_hearts": {
+        "green": 1,
+        "gray": 2
+      },
+      "score": 1,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!S-bp5-020-L.png"
+    },
+    {
+      "name": "夢で夜空を照らしたい",
+      "card_no": "PL!S-bp5-021-L",
+      "required_hearts": {
+        "red": 1,
+        "green": 1,
+        "blue": 1,
+        "gray": 4
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!S-bp5-021-L.png"
+    },
+    {
+      "name": "夢で夜空を照らしたい",
+      "card_no": "PL!S-bp5-021-SECL",
+      "required_hearts": {
+        "red": 1,
+        "green": 1,
+        "blue": 1,
+        "gray": 4
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!S-bp5-SECL.png"
+    },
+    {
+      "name": "SELF CONTROL!!",
+      "card_no": "PL!S-bp5-022-L",
+      "required_hearts": {
+        "blue": 2,
+        "purple": 2,
+        "gray": 5
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!S-bp5-022-L.png"
+    },
+    {
+      "name": "Awaken the power",
+      "card_no": "PL!S-bp5-023-L",
+      "required_hearts": {
+        "red": 3,
+        "green": 3,
+        "blue": 3,
+        "purple": 2,
+        "gray": 5
+      },
+      "score": 7,
+      "score_plus": 0,
+      "special_heart": "スコア",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!S-bp5-023-L.png"
+    },
+    {
+      "name": "ビタミンSUMMER!",
+      "card_no": "PL!SP-bp2-024-SECL",
+      "required_hearts": {
+        "red": 1,
+        "yellow": 4,
+        "purple": 1,
+        "gray": 6
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!SP-bp2-SECL.png"
+    },
+    {
+      "name": "Shooting Voice!!",
+      "card_no": "PL!SP-bp5-023-L",
+      "required_hearts": {
+        "red": 2,
+        "yellow": 2,
+        "purple": 2,
+        "gray": 7
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!SP-bp5-023-L.png"
+    },
+    {
+      "name": "MIRACLE NEW STORY",
+      "card_no": "PL!SP-bp5-024-L",
+      "required_hearts": {
+        "pink": 2,
+        "red": 4,
+        "purple": 4,
+        "gray": 5
+      },
+      "score": 7,
+      "score_plus": 0,
+      "special_heart": "スコア",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!SP-bp5-024-L.png"
+    },
+    {
+      "name": "常夏☆サンシャイン",
+      "card_no": "PL!SP-bp5-025-L",
+      "required_hearts": {
+        "red": 2,
+        "yellow": 2,
+        "purple": 2,
+        "gray": 8
+      },
+      "score": 6,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!SP-bp5-025-L.png"
+    },
+    {
+      "name": "Let's be ONE",
+      "card_no": "PL!SP-bp5-026-L",
+      "required_hearts": {
+        "red": 1,
+        "yellow": 1,
+        "purple": 1
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "スコア",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!SP-bp5-026-L.png"
+    },
+    {
+      "name": "HOT PASSION!!",
+      "card_no": "PL!SP-bp5-027-L",
+      "required_hearts": {
+        "pink": 2,
+        "red": 2,
+        "yellow": 1,
+        "purple": 1,
+        "gray": 2
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "",
+      "product": "ブースターパック Anniversary 2026",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP05/PL!SP-bp5-027-L.png"
+    },
+    {
+      "name": "元気全開DAY！DAY！DAY！",
+      "card_no": "PL!S-pb1-019-L",
+      "required_hearts": {
+        "red": 4,
+        "gray": 2
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "プレミアムブースター ラブライブ！サンシャイン!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLS/PL!S-pb1-019-L.png"
+    },
+    {
+      "name": "トリコリコPLEASE!!",
+      "card_no": "PL!S-pb1-020-L",
+      "required_hearts": {
+        "green": 8,
+        "gray": 6
+      },
+      "score": 6,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "プレミアムブースター ラブライブ！サンシャイン!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLS/PL!S-pb1-020-L.png"
+    },
+    {
+      "name": "Strawberry Trapper",
+      "card_no": "PL!S-pb1-021-L",
+      "required_hearts": {
+        "blue": 2,
+        "gray": 2
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "Score+1",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "プレミアムブースター ラブライブ！サンシャイン!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLS/PL!S-pb1-021-L.png"
+    },
+    {
+      "name": "逃走迷走メビウスループ",
+      "card_no": "PL!S-pb1-022-L",
+      "required_hearts": {
+        "green": 3,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "プレミアムブースター ラブライブ！サンシャイン!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLS/PL!S-pb1-022-L.png"
+    },
+    {
+      "name": "逃走迷走メビウスループ",
+      "card_no": "PL!S-pb1-022-L+",
+      "required_hearts": {
+        "green": 3,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "プレミアムブースター ラブライブ！サンシャイン!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLS/PL!S-pb1-022-L2.png"
+    },
+    {
+      "name": "Next SPARKLING!!",
+      "card_no": "PL!S-pb1-023-L",
+      "required_hearts": {
+        "red": 6,
+        "green": 6,
+        "blue": 6,
+        "gray": 3
+      },
+      "score": 9,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "プレミアムブースター ラブライブ！サンシャイン!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLS/PL!S-pb1-023-L.png"
+    },
+    {
+      "name": "Next SPARKLING!!",
+      "card_no": "PL!S-pb1-023-L+",
+      "required_hearts": {
+        "red": 6,
+        "green": 6,
+        "blue": 6,
+        "gray": 3
+      },
+      "score": 9,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "プレミアムブースター ラブライブ！サンシャイン!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLS/PL!S-pb1-023-L2.png"
+    },
+    {
+      "name": "僕らの走ってきた道は…",
+      "card_no": "PL!S-pb1-024-L",
+      "required_hearts": {
+        "blue": 4,
+        "gray": 3
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "プレミアムブースター ラブライブ！サンシャイン!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLS/PL!S-pb1-024-L.png"
+    },
+    {
+      "name": "Starlight Prologue",
+      "card_no": "PL!SP-bp1-025-L+",
+      "required_hearts": {
+        "yellow": 1,
+        "purple": 1,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "プレミアムブースター ラブライブ！スーパースター!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBSP/PL!SP-bp1_025-L2.png"
+    },
+    {
+      "name": "ディストーション",
+      "card_no": "PL!SP-pb1-023-L",
+      "required_hearts": {
+        "red": 4,
+        "gray": 4
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "プレミアムブースター ラブライブ！スーパースター!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBSP/PL!SP-pb1_023-L.png"
+    },
+    {
+      "name": "ニュートラル",
+      "card_no": "PL!SP-pb1-024-L",
+      "required_hearts": {
+        "purple": 8,
+        "gray": 7
+      },
+      "score": 6,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "プレミアムブースター ラブライブ！スーパースター!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBSP/PL!SP-pb1_024-L.png"
+    },
+    {
+      "name": "Jellyfish",
+      "card_no": "PL!SP-pb1-025-L",
+      "required_hearts": {
+        "red": 4,
+        "purple": 4,
+        "gray": 6
+      },
+      "score": 6,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "プレミアムブースター ラブライブ！スーパースター!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBSP/PL!SP-pb1_025-L.png"
+    },
+    {
+      "name": "Jump Into the New World",
+      "card_no": "PL!SP-pb1-026-L",
+      "required_hearts": {
+        "red": 3,
+        "purple": 3,
+        "gray": 4
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "プレミアムブースター ラブライブ！スーパースター!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBSP/PL!SP-pb1_026-L.png"
+    },
+    {
+      "name": "Jump Into the New World",
+      "card_no": "PL!SP-pb1-026-L+",
+      "required_hearts": {
+        "red": 3,
+        "purple": 3,
+        "gray": 4
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "プレミアムブースター ラブライブ！スーパースター!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBSP/PL!SP-pb1_026-L2.png"
+    },
+    {
+      "name": "Snow halation",
+      "card_no": "PL!-bp3-020-L+",
+      "required_hearts": {
+        "pink": 1,
+        "purple": 1,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "プレミアムブースター ラブライブ！",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLL/PL!-bp3-L2.png"
+    },
+    {
+      "name": "WAO-WAO Powerful day!",
+      "card_no": "PL!-pb1-028-L",
+      "required_hearts": {
+        "pink": 2,
+        "yellow": 4,
+        "gray": 7
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！",
+      "product": "プレミアムブースター ラブライブ！",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLL/PL!-pb1-L-028-L.png"
+    },
+    {
+      "name": "知らないLove＊教えてLove",
+      "card_no": "PL!-pb1-029-L",
+      "required_hearts": {
+        "pink": 2,
+        "purple": 1
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "スコア",
+      "series": "ラブライブ！",
+      "product": "プレミアムブースター ラブライブ！",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLL/PL!-pb1-L-029-L.png"
+    },
+    {
+      "name": "Cutie Panther",
+      "card_no": "PL!-pb1-030-L",
+      "required_hearts": {
+        "yellow": 2,
+        "purple": 4,
+        "gray": 7
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！",
+      "product": "プレミアムブースター ラブライブ！",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLL/PL!-pb1-L-030-L.png"
+    },
+    {
+      "name": "輝夜の城で踊りたい",
+      "card_no": "PL!-pb1-031-L",
+      "required_hearts": {
+        "purple": 1,
+        "gray": 2
+      },
+      "score": 1,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "プレミアムブースター ラブライブ！",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLL/PL!-pb1-L-031-L.png"
+    },
+    {
+      "name": "SENTIMENTAL StepS",
+      "card_no": "PL!-pb1-032-L",
+      "required_hearts": {
+        "pink": 1,
+        "yellow": 1,
+        "purple": 1,
+        "gray": 2
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "プレミアムブースター ラブライブ！",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLL/PL!-pb1-L-032-L.png"
+    },
+    {
+      "name": "KiRa-KiRa Sensation!",
+      "card_no": "PL!-pb1-033-L",
+      "required_hearts": {
+        "pink": 4,
+        "yellow": 4,
+        "purple": 4,
+        "gray": 6
+      },
+      "score": 8,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！",
+      "product": "プレミアムブースター ラブライブ！",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBLL/PL!-pb1-L-033-L.png"
+    },
+    {
+      "name": "Blue!",
+      "card_no": "PL!N-bp4-032-L+",
+      "required_hearts": {
+        "pink": 1,
+        "red": 1,
+        "blue": 1,
+        "gray": 4
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "プレミアムブースター ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBnj/PL!N-bp4-032-L2.png"
+    },
+    {
+      "name": "Cara Tesoro",
+      "card_no": "PL!N-pb1-037-L",
+      "required_hearts": {
+        "green": 6,
+        "gray": 6
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "プレミアムブースター ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBnj/PL!N-pb1-037-L.png"
+    },
+    {
+      "name": "PHOENIX",
+      "card_no": "PL!N-pb1-038-L",
+      "required_hearts": {
+        "pink": 3,
+        "red": 1,
+        "purple": 1,
+        "gray": 2
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "プレミアムブースター ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBnj/PL!N-pb1-038-L.png"
+    },
+    {
+      "name": "Stellar Stream",
+      "card_no": "PL!N-pb1-039-L",
+      "required_hearts": {
+        "pink": 4,
+        "purple": 4,
+        "gray": 6
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "プレミアムブースター ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBnj/PL!N-pb1-039-L.png"
+    },
+    {
+      "name": "どこにいても君は君\\n( Doko ni Itemo Kimi wa Kimi )",
+      "card_no": "PL!N-pb1-040-L",
+      "required_hearts": {
+        "yellow": 1,
+        "blue": 1,
+        "gray": 1
+      },
+      "score": 1,
+      "score_plus": 0,
+      "special_heart": "スコア",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "プレミアムブースター ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBnj/PL!N-pb1-040-L.png"
+    },
+    {
+      "name": "PASTEL",
+      "card_no": "PL!N-pb1-041-L",
+      "required_hearts": {
+        "yellow": 1,
+        "green": 1,
+        "blue": 1,
+        "purple": 1,
+        "gray": 5
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "プレミアムブースター ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBnj/PL!N-pb1-041-L.png"
+    },
+    {
+      "name": "PASTEL",
+      "card_no": "PL!N-pb1-041-L+",
+      "required_hearts": {
+        "yellow": 1,
+        "green": 1,
+        "blue": 1,
+        "purple": 1,
+        "gray": 5
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "プレミアムブースター ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBnj/PL!N-pb1-041-L2.png"
+    },
+    {
+      "name": "Eternalize Love!!",
+      "card_no": "PL!N-pb1-042-L",
+      "required_hearts": {
+        "gray": 12
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "プレミアムブースター ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/PBnj/PL!N-pb1-042-L.png"
+    },
+    {
+      "name": "WE WILL!!",
+      "card_no": "PL!SP-sd1-023-SD",
+      "required_hearts": {
+        "red": 1,
+        "purple": 1,
+        "gray": 1
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "Score+1",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "スタートデッキ ラブライブ！スーパースター!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/SPSD01/PL!SP-sd1-023-SD.png"
+    },
+    {
+      "name": "シェキラ☆☆☆",
+      "card_no": "PL!SP-sd1-024-SD",
+      "required_hearts": {
+        "red": 1,
+        "purple": 1,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "スタートデッキ ラブライブ！スーパースター!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/SPSD01/PL!SP-sd1-024-SD.png"
+    },
+    {
+      "name": "未来は風のように",
+      "card_no": "PL!SP-sd1-025-SD",
+      "required_hearts": {
+        "red": 2,
+        "purple": 2,
+        "gray": 3
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "スタートデッキ ラブライブ！スーパースター!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/SPSD01/PL!SP-sd1-025-SD.png"
+    },
+    {
+      "name": "私のSymphony 〜澁谷かのんVer.〜",
+      "card_no": "PL!SP-sd1-026-SD",
+      "required_hearts": {
+        "red": 4,
+        "purple": 4,
+        "gray": 3
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "ラブライブ！スーパースター!!",
+      "product": "スタートデッキ ラブライブ！スーパースター!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/SPSD01/PL!SP-sd1-026-SD.png"
+    },
+    {
+      "name": "START:DASH!!",
+      "card_no": "PL!-sd1-019-SD",
+      "required_hearts": {
+        "pink": 1,
+        "yellow": 1,
+        "purple": 1
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "Score+1",
+      "series": "ラブライブ！",
+      "product": "スタートデッキ ラブライブ！",
+      "image": "https://llofficial-Cardgame.com/wordpress/wp-content/images/cardlist/PLSD01/PL!-pb1-019-SD.png"
+    },
+    {
+      "name": "きっと青春が聞こえる",
+      "card_no": "PL!-sd1-020-SD",
+      "required_hearts": {
+        "pink": 1,
+        "yellow": 1,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "スタートデッキ ラブライブ！",
+      "image": "https://llofficial-Cardgame.com/wordpress/wp-content/images/cardlist/PLSD01/PL!-pb1-020-SD.png"
+    },
+    {
+      "name": "これからのSomeday",
+      "card_no": "PL!-sd1-021-SD",
+      "required_hearts": {
+        "pink": 1,
+        "yellow": 1,
+        "purple": 1,
+        "gray": 4
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！",
+      "product": "スタートデッキ ラブライブ！",
+      "image": "https://llofficial-Cardgame.com/wordpress/wp-content/images/cardlist/PLSD01/PL!-pb1-021-SD.png"
+    },
+    {
+      "name": "僕らは今のなかで",
+      "card_no": "PL!-sd1-022-SD",
+      "required_hearts": {
+        "pink": 2,
+        "yellow": 2,
+        "purple": 2,
+        "gray": 6
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "ラブライブ！",
+      "product": "スタートデッキ ラブライブ！",
+      "image": "https://llofficial-Cardgame.com/wordpress/wp-content/images/cardlist/PLSD01/PL!-pb1-022-SD.png"
+    },
+    {
+      "name": "Colorful Dreams! Colorful Smiles!",
+      "card_no": "PL!N-sd1-025-SD",
+      "required_hearts": {
+        "gray": 4
+      },
+      "score": 1,
+      "score_plus": 1,
+      "special_heart": "Score+1",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "スタートデッキ ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/NSD01/PL!N-sd1-025-SD.png"
+    },
+    {
+      "name": "夢が僕らの太陽さ",
+      "card_no": "PL!N-sd1-026-SD",
+      "required_hearts": {
+        "pink": 1,
+        "red": 1,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "スタートデッキ ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/NSD01/PL!N-sd1-026-SD.png"
+    },
+    {
+      "name": "Just Believe!!!",
+      "card_no": "PL!N-sd1-027-SD",
+      "required_hearts": {
+        "pink": 1,
+        "red": 1,
+        "green": 1,
+        "gray": 4
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "スタートデッキ ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/NSD01/PL!N-sd1-027-SD.png"
+    },
+    {
+      "name": "Dream with You",
+      "card_no": "PL!N-sd1-028-SD",
+      "required_hearts": {
+        "pink": 4,
+        "gray": 7
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "draw",
+      "series": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "product": "スタートデッキ ラブライブ！虹ヶ咲学園スクールアイドル同好会",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/NSD01/PL!N-sd1-028-SD.png"
+    },
+    {
+      "name": "夏めきペイン",
+      "card_no": "PL!HS-sd1-017-SD",
+      "required_hearts": {
+        "pink": 1,
+        "green": 1,
+        "blue": 1,
+        "gray": 2
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "スタートデッキ ラブライブ！蓮ノ空女学院スクールアイドルクラブ",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/HSSD01/PL!HS-sd1-017-SD.png"
+    },
+    {
+      "name": "Dream Believers（105期Ver.）",
+      "card_no": "PL!HS-sd1-018-SD",
+      "required_hearts": {
+        "pink": 1,
+        "green": 1,
+        "blue": 1,
+        "purple": 1,
+        "gray": 4
+      },
+      "score": 3,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "スタートデッキ ラブライブ！蓮ノ空女学院スクールアイドルクラブ",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/HSSD01/PL!HS-sd1-018-SD.png"
+    },
+    {
+      "name": "アイドゥーミー！",
+      "card_no": "PL!HS-sd1-019-SD",
+      "required_hearts": {
+        "pink": 1,
+        "green": 1,
+        "blue": 1,
+        "purple": 1,
+        "gray": 8
+      },
+      "score": 5,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "スタートデッキ ラブライブ！蓮ノ空女学院スクールアイドルクラブ",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/HSSD01/PL!HS-sd1-019-SD.png"
+    },
+    {
+      "name": "Link to the FUTURE（104期Ver.）",
+      "card_no": "PL!HS-sd1-020-SD",
+      "required_hearts": {
+        "pink": 2,
+        "green": 2,
+        "blue": 2,
+        "gray": 8
+      },
+      "score": 6,
+      "score_plus": 0,
+      "special_heart": "スコア",
+      "series": "蓮ノ空女学院スクールアイドルクラブ",
+      "product": "スタートデッキ ラブライブ！蓮ノ空女学院スクールアイドルクラブ",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/HSSD01/PL!HS-sd1-020-SD.png"
+    },
+    {
+      "name": "未来の僕らは知ってるよ",
+      "card_no": "PL!S-sd1-019-SD",
+      "required_hearts": {
+        "red": 1,
+        "green": 1,
+        "blue": 1
+      },
+      "score": 1,
+      "score_plus": 0,
+      "special_heart": "スコア",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "スタートデッキ ラブライブ！サンシャイン!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/SSD01/PL!S-sd1-019-SD.png"
+    },
+    {
+      "name": "JIMO-AI Dash!",
+      "card_no": "PL!S-sd1-020-SD",
+      "required_hearts": {
+        "red": 1,
+        "green": 1,
+        "blue": 1,
+        "gray": 3
+      },
+      "score": 2,
+      "score_plus": 0,
+      "special_heart": "",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "スタートデッキ ラブライブ！サンシャイン!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/SSD01/PL!S-sd1-020-SD.png"
+    },
+    {
+      "name": "永久hours",
+      "card_no": "PL!S-sd1-021-SD",
+      "required_hearts": {
+        "red": 2,
+        "green": 2,
+        "blue": 2,
+        "gray": 4
+      },
+      "score": 4,
+      "score_plus": 0,
+      "special_heart": "ドロー",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "スタートデッキ ラブライブ！サンシャイン!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/SSD01/PL!S-sd1-021-SD.png"
+    },
+    {
+      "name": "Jump up HIGH!!",
+      "card_no": "PL!S-sd1-022-SD",
+      "required_hearts": {
+        "red": 2,
+        "green": 2,
+        "blue": 2,
+        "gray": 9
+      },
+      "score": 6,
+      "score_plus": 0,
+      "special_heart": "スコア",
+      "series": "ラブライブ！サンシャイン!!",
+      "product": "スタートデッキ ラブライブ！サンシャイン!!",
+      "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/SSD01/PL!S-sd1-022-SD.png"
+    }
+  ]
+}
