@@ -104,12 +104,58 @@ def _card_img_src(image: str) -> str:
     return f"data:{mime};base64,{data}"
 
 
-def _sample_from_deck(n_draw: int) -> dict:
-    """สุ่ม n_draw ใบจาก deck (ตาม deck_* session_state) คืน dict counts ต่อ category.
-    Non-trigger แบ่งเป็น 'non_sp' (Score+ Live) และ 'non' (ธรรมดา) เพื่อ track score_plus ที่สุ่มออกมา
-    แต่ return key 'non' รวมทั้งสอง และ 'score_plus_drawn' แยกต่างหาก
+def _build_known_fixed_counts() -> dict:
+    """คำนวณ trigger counts ของการ์ดที่รู้แน่ชัดว่าออกจาก Deck แล้ว
+    (Stage slots + Board Live slots + Live สำเร็จ)
+    คืน dict พร้อม score_plus_drawn สำหรับ Score+ Live
     """
-    deck_counts = {
+    idx = st.session_state.get("card_index", {})
+    live_lut = {c.card_no: c for c in st.session_state.get("live_cards", [])}
+    counts: dict = {c.value: 0 for c in Color.trigger_colors()}
+    counts["all"] = 0
+    counts["non"] = 0
+    counts["score_plus_drawn"] = 0
+    for slot_prefix, slot_range in [("stage_slot_", range(3)), ("live_slot_", range(3))]:
+        for i in slot_range:
+            cn = st.session_state.get(f"{slot_prefix}{i}", "")
+            card = idx.get(cn) if cn else None
+            if not card:
+                continue
+            tc = card.trigger_color
+            if tc is None:
+                counts["non"] += 1
+                lc = live_lut.get(cn)
+                if lc and lc.score_plus > 0:
+                    counts["score_plus_drawn"] += 1
+            elif tc == Color.ALL:
+                counts["all"] += 1
+            elif tc.value in counts:
+                counts[tc.value] += 1
+    n_done = st.session_state.get("wr_done_live_count", 0)
+    for i in range(n_done):
+        cn = st.session_state.get(f"wr_done_live_{i}", "")
+        card = idx.get(cn) if cn else None
+        if not card:
+            continue
+        tc = card.trigger_color
+        if tc is None:
+            counts["non"] += 1
+            lc = live_lut.get(cn)
+            if lc and lc.score_plus > 0:
+                counts["score_plus_drawn"] += 1
+        elif tc == Color.ALL:
+            counts["all"] += 1
+        elif tc.value in counts:
+            counts[tc.value] += 1
+    return counts
+
+
+def _build_unknown_pool() -> list[str]:
+    """สร้าง pool ของการ์ดที่ยังไม่รู้ว่าออกมาเป็นอะไร
+    = deck เต็ม หัก fixed (Stage/Board/Done)
+    ใช้สำหรับสุ่มมือ + WR_extra
+    """
+    deck_colors = {
         Color.RED:    st.session_state.get("deck_red", 0),
         Color.BLUE:   st.session_state.get("deck_blue", 0),
         Color.GREEN:  st.session_state.get("deck_green", 0),
@@ -117,95 +163,41 @@ def _sample_from_deck(n_draw: int) -> dict:
         Color.PURPLE: st.session_state.get("deck_purple", 0),
         Color.PINK:   st.session_state.get("deck_pink", 0),
     }
-    pool: list[str] = []
-    for color, cnt in deck_counts.items():
-        pool.extend([color.value] * cnt)
-    pool.extend(["all"] * st.session_state.get("deck_all", 0))
-    # แยก Non-trigger เป็น Score+ Live และ Non-trigger ธรรมดา
+    deck_all = st.session_state.get("deck_all", 0)
     sp_total = st.session_state.get("deck_score_plus_count", _calc_deck_score_plus_count())
-    non_total = st.session_state.get("deck_non", 0)
-    non_plain = max(0, non_total - sp_total)
-    pool.extend(["non_sp"] * sp_total)
-    pool.extend(["non"] * non_plain)
+    non_plain = st.session_state.get("deck_non_plain", 0)
 
+    fixed = _build_known_fixed_counts()
+    pool: list[str] = []
+    for color in Color.trigger_colors():
+        cnt = max(0, deck_colors[color] - fixed[color.value])
+        pool.extend([color.value] * cnt)
+    pool.extend(["all"] * max(0, deck_all - fixed["all"]))
+    fixed_sp = fixed["score_plus_drawn"]
+    fixed_non_plain = fixed["non"] - fixed_sp
+    pool.extend(["non_sp"] * max(0, sp_total - fixed_sp))
+    pool.extend(["non"] * max(0, non_plain - fixed_non_plain))
+    return pool
+
+
+def _sample_from_deck(n_draw: int) -> dict:
+    """สุ่ม n_draw ใบจาก unknown pool (หัก Stage/Board/Done แล้ว)"""
+    pool = _build_unknown_pool()
     n_draw = min(n_draw, len(pool))
     drawn = random.sample(pool, n_draw)
 
-    counts: dict = {c.value: 0 for c in [Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.PURPLE, Color.PINK]}
+    counts: dict = {c.value: 0 for c in Color.trigger_colors()}
     counts["all"] = 0
     counts["non"] = 0
     counts["score_plus_drawn"] = 0
     for card in drawn:
         if card == "non_sp":
-            counts["non"] += 1          # นับรวมใน non_trigger
+            counts["non"] += 1
             counts["score_plus_drawn"] += 1
         else:
             counts[card] += 1
     return counts
 
-
-def _stage_trigger_counts() -> dict:
-    """คำนวณ trigger color สะสมของการ์ดทุกใบที่อยู่บน Stage (จาก stage_slot_* session_state)."""
-    idx = st.session_state.get("card_index", {})
-    counts: dict = {c.value: 0 for c in [Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.PURPLE, Color.PINK]}
-    counts["all"] = 0
-    counts["non"] = 0
-    for i in range(3):
-        card_no = st.session_state.get(f"stage_slot_{i}", "")
-        card = idx.get(card_no) if card_no else None
-        if not card:
-            continue
-        tc = card.trigger_color
-        if tc is None:
-            counts["non"] += 1
-        elif tc == Color.ALL:
-            counts["all"] += 1
-        elif tc.value in counts:
-            counts[tc.value] += 1
-    return counts
-
-
-def _board_live_trigger_counts() -> dict:
-    """คำนวณ trigger color ของ Live card ที่วางอยู่บน Game Board (live_slot_* session_state)."""
-    idx = st.session_state.get("card_index", {})
-    counts: dict = {c.value: 0 for c in [Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.PURPLE, Color.PINK]}
-    counts["all"] = 0
-    counts["non"] = 0
-    for i in range(3):
-        card_no = st.session_state.get(f"live_slot_{i}", "")
-        card = idx.get(card_no) if card_no else None
-        if not card:
-            continue
-        tc = card.trigger_color
-        if tc is None:
-            counts["non"] += 1
-        elif tc == Color.ALL:
-            counts["all"] += 1
-        elif tc.value in counts:
-            counts[tc.value] += 1
-    return counts
-
-
-def _completed_live_trigger_counts() -> dict:
-    """คำนวณ trigger color สะสมของ Live card ที่เล่นสำเร็จไปแล้ว (จาก wr_done_live_* session_state)."""
-    idx = st.session_state.get("card_index", {})
-    counts: dict = {c.value: 0 for c in [Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.PURPLE, Color.PINK]}
-    counts["all"] = 0
-    counts["non"] = 0
-    n = st.session_state.get("wr_done_live_count", 0)
-    for i in range(n):
-        card_no = st.session_state.get(f"wr_done_live_{i}", "")
-        card = idx.get(card_no) if card_no else None
-        if not card:
-            continue
-        tc = card.trigger_color
-        if tc is None:
-            counts["non"] += 1
-        elif tc == Color.ALL:
-            counts["all"] += 1
-        elif tc.value in counts:
-            counts[tc.value] += 1
-    return counts
 
 
 def _merge_wr_counts(*count_dicts) -> dict:
@@ -213,6 +205,7 @@ def _merge_wr_counts(*count_dicts) -> dict:
     result: dict = {c.value: 0 for c in [Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.PURPLE, Color.PINK]}
     result["all"] = 0
     result["non"] = 0
+    result["score_plus_drawn"] = 0
     for d in count_dicts:
         for k in result:
             result[k] = result.get(k, 0) + d.get(k, 0)
@@ -220,7 +213,9 @@ def _merge_wr_counts(*count_dicts) -> dict:
 
 
 def _apply_wr_counts_to_state(counts: dict) -> None:
-    """เขียน counts dict ลง session_state wr_* keys."""
+    """เขียน counts dict ลง session_state wr_* keys.
+    counts["non"] = plain + score_plus รวมกัน; เขียนลง wr_non_plain โดยหัก score_plus_drawn ออก
+    """
     st.session_state["wr_red"]    = counts[Color.RED.value]
     st.session_state["wr_blue"]   = counts[Color.BLUE.value]
     st.session_state["wr_green"]  = counts[Color.GREEN.value]
@@ -228,7 +223,8 @@ def _apply_wr_counts_to_state(counts: dict) -> None:
     st.session_state["wr_purple"] = counts[Color.PURPLE.value]
     st.session_state["wr_pink"]   = counts[Color.PINK.value]
     st.session_state["wr_all"]    = counts["all"]
-    st.session_state["wr_non"]    = counts["non"]
+    sp_drawn = counts.get("score_plus_drawn", 0)
+    st.session_state["wr_non_plain"] = max(0, counts["non"] - sp_drawn)
 
 
 def _empty_counts() -> dict:
@@ -270,48 +266,32 @@ def _score_plus_used() -> int:
     return used
 
 
-def _merge_all_sources() -> dict:
-    """รวมทั้ง 5 แหล่ง: Stage + Live บน Board + Live สำเร็จ + มือ (cache) + WR extra (cache)."""
-    stage = _stage_trigger_counts()
-    board_live = _board_live_trigger_counts()
-    done_live = _completed_live_trigger_counts()
-    hand = st.session_state.get("_wr_hand_sample") or _empty_counts()
-    wr_extra = st.session_state.get("_wr_extra_sample") or _empty_counts()
-    return _merge_wr_counts(stage, board_live, done_live, hand, wr_extra)
-
-
-def _apply_sp_drawn_to_state() -> None:
-    """รวม score_plus_drawn จากมือและ WR extra แล้วเขียนลง wr_sp_extra."""
-    hand = st.session_state.get("_wr_hand_sample") or {}
-    extra = st.session_state.get("_wr_extra_sample") or {}
-    sp = hand.get("score_plus_drawn", 0) + extra.get("score_plus_drawn", 0)
-    st.session_state["wr_sp_extra"] = sp
-
-
-def _recalculate_wr_callback() -> None:
-    """Callback ปุ่ม 'อัปเดต Waiting Room': สุ่มทุกแหล่งที่มีจำนวนแต่ยังไม่มี cache แล้วรวม 4 แหล่ง."""
+def _resample_all_callback() -> None:
+    """Callback ปุ่มสุ่มเดียว: สุ่มการ์ดที่ยังไม่รู้ (มือ + WR_extra) แล้วรวมกับ fixed."""
     n_hand = st.session_state.get("wr_hand_n") or 0
-    st.session_state["_wr_hand_sample"] = _sample_from_deck(n_hand) if n_hand > 0 else _empty_counts()
     n_extra = st.session_state.get("wr_extra_n") or 0
-    st.session_state["_wr_extra_sample"] = _sample_from_deck(n_extra) if n_extra > 0 else _empty_counts()
-    _apply_wr_counts_to_state(_merge_all_sources())
-    _apply_sp_drawn_to_state()
-
-
-def _resample_hand_callback() -> None:
-    """Callback ปุ่ม 'สุ่มการ์ดในมือใหม่': สุ่มมือใหม่แล้วรวมทั้ง 4 แหล่ง."""
-    n_hand = st.session_state.get("wr_hand_n") or 0
-    st.session_state["_wr_hand_sample"] = _sample_from_deck(n_hand) if n_hand > 0 else _empty_counts()
-    _apply_wr_counts_to_state(_merge_all_sources())
-    _apply_sp_drawn_to_state()
-
-
-def _resample_wr_extra_callback() -> None:
-    """Callback ปุ่ม 'สุ่ม Waiting Room': สุ่ม WR extra ใหม่แล้วรวมทั้ง 4 แหล่ง."""
-    n_draw = st.session_state.get("wr_extra_n") or 0
-    st.session_state["_wr_extra_sample"] = _sample_from_deck(n_draw) if n_draw > 0 else _empty_counts()
-    _apply_wr_counts_to_state(_merge_all_sources())
-    _apply_sp_drawn_to_state()
+    n_unknown = n_hand + n_extra
+    sample = _sample_from_deck(n_unknown) if n_unknown > 0 else _empty_counts()
+    st.session_state["_wr_unknown_sample"] = sample
+    # Score+ ที่สุ่มได้ใน unknown → เขียนลง wr_sp_extra (clamp ไม่เกิน max)
+    sp_deck_total = _calc_deck_score_plus_count()
+    sp_auto = _score_plus_used()
+    sp_from_sample = sample.get("score_plus_drawn", 0)
+    st.session_state["wr_sp_extra"] = min(sp_from_sample, max(0, sp_deck_total - sp_auto))
+    # บันทึก snapshot สำหรับ stable total
+    fixed = _build_known_fixed_counts()
+    merged = _merge_wr_counts(fixed, sample)
+    _apply_wr_counts_to_state(merged)
+    # snapshot total
+    sp_total = merged.get("score_plus_drawn", 0)
+    total_merged = sum(merged[k] for k in merged if k != "score_plus_drawn") + sp_total
+    st.session_state["_wr_merged_total"] = total_merged
+    st.session_state["_wr_merged_hand_n"] = n_hand
+    st.session_state["_wr_merged_extra_n"] = n_extra
+    stage_n = sum(1 for i in range(3) if st.session_state.get(f"stage_slot_{i}", ""))
+    live_n = sum(1 for i in range(3) if st.session_state.get(f"live_slot_{i}", ""))
+    done_n = st.session_state.get("wr_done_live_count", 0)
+    st.session_state["_wr_merged_fixed_out"] = stage_n + live_n + done_n
 
 
 def _random_waiting_room_callback() -> None:
@@ -343,8 +323,8 @@ def _apply_deck_composition(dc: DeckComposition) -> None:
     st.session_state.deck_purple = dc.trigger_counts.get(Color.PURPLE, 0)
     st.session_state.deck_pink = dc.trigger_counts.get(Color.PINK, 0)
     st.session_state.deck_all = dc.all_trigger
-    st.session_state.deck_non = dc.non_trigger
     st.session_state.deck_score_plus_count = dc.score_plus_count
+    st.session_state.deck_non_plain = dc.non_trigger - dc.score_plus_count
 
 
 def _store_imported_deck(source: str, entries, title: str = "") -> None:
@@ -849,7 +829,7 @@ with st.sidebar:
         st.session_state.deck_purple = 0
         st.session_state.deck_pink = 0
         st.session_state.deck_all = 0
-        st.session_state.deck_non = 0
+        st.session_state.deck_non_plain = 0
 
     # ---- Deck import (decklog / paste) ----
     _idx_size = len(st.session_state.get("card_index", {}))
@@ -992,19 +972,29 @@ with st.sidebar:
     st.subheader("Special")
     deck_all = st.number_input(f"{COLOR_EMOJI[Color.ALL]} All Trigger (wildcard)",
                                min_value=0, max_value=60, key="deck_all")
-    deck_non = st.number_input("⬛ Non-Trigger", min_value=0, max_value=60, key="deck_non")
-
-    # score_plus_count: ถ้า import deck แล้วคำนวณอัตโนมัติ, manual mode ให้กรอกเอง
     _auto_sp = _calc_deck_score_plus_count()
+    _deck_non_plain_max = 60 - deck_all  # ป้องกัน max เป็นลบ
+    deck_non_plain = st.number_input(
+        "⬛ Non-Trigger (ธรรมดา)",
+        min_value=0, max_value=_deck_non_plain_max, key="deck_non_plain",
+        help="Member/Live card ที่ไม่มี Trigger heart (ไม่นับ Score+ Live)",
+    )
     if _auto_sp > 0:
         deck_sp = _auto_sp
-        st.caption(f"⭐ Score+ Live ใน Deck: **{deck_sp}** ใบ (คำนวณจาก import)")
+        st.number_input(
+            "⭐ Score+ Live ใน Deck",
+            min_value=deck_sp, max_value=deck_sp, value=deck_sp,
+            key="deck_score_plus_manual",
+            help="คำนวณอัตโนมัติจาก import — แก้ไขได้ที่ Deck Import",
+            disabled=True,
+        )
     else:
         deck_sp = st.number_input(
             "⭐ Score+ Live ใน Deck",
             min_value=0, max_value=12, key="deck_score_plus_manual",
             help="จำนวน Live card ใน Deck ที่มี Score+ effect (เมื่อ Yell เจอการ์ดนี้จะได้คะแนน bonus)",
         )
+    deck_non = deck_non_plain + deck_sp  # total non-trigger = plain + Score+
 
     deck = DeckComposition(
         trigger_counts={
@@ -1178,27 +1168,35 @@ if _has_deck:
         if (c := _idx_lookup(e.card_no)) and c.card_type == "live"
     ]
 
-    # ── แหล่ง 1: Stage (อ่านจาก Game Board อัตโนมัติ) ──────────────────────
-    with st.expander("🎭 Stage & Live บน Board (ดึงจาก Game Board อัตโนมัติ)", expanded=False):
-        _stage_cards = [
-            st.session_state.get(f"stage_slot_{i}", "")
-            for i in range(3)
-            if st.session_state.get(f"stage_slot_{i}", "")
-        ]
-        if _stage_cards:
-            _sc_lines = []
-            for i in range(3):
-                _cn = st.session_state.get(f"stage_slot_{i}", "")
-                if not _cn:
-                    continue
-                _cd = _idx_wr.get(_cn)
-                _name = _cd.name if _cd else _cn
-                _tc = _cd.trigger_color if _cd else None
-                _tc_label = _trigger_label(_tc)
-                _sc_lines.append(f"- {_name} → {_tc_label}")
+    # ── แหล่ง 1: Stage & Live บน Board (อ่านจาก Game Board อัตโนมัติ) ─────────
+    _stage_count = sum(1 for i in range(3) if st.session_state.get(f"stage_slot_{i}", ""))
+    _board_live_count = sum(1 for i in range(3) if st.session_state.get(f"live_slot_{i}", ""))
+    _fixed_source1 = _stage_count + _board_live_count
+    with st.expander(
+        f"🎭 Stage & Live บน Board — {_fixed_source1} ใบ "
+        f"(Stage {_stage_count} + Live {_board_live_count})",
+        expanded=False,
+    ):
+        _sc_lines = []
+        for i in range(3):
+            _cn = st.session_state.get(f"stage_slot_{i}", "")
+            if not _cn:
+                continue
+            _cd = _idx_wr.get(_cn)
+            _name = _cd.name if _cd else _cn
+            _tc = _cd.trigger_color if _cd else None
+            _sc_lines.append(f"- 🎭 {_name} → {_trigger_label(_tc)}")
+        for i in range(3):
+            _cn = st.session_state.get(f"live_slot_{i}", "")
+            if not _cn:
+                continue
+            _cd = _idx_wr.get(_cn)
+            _name = _cd.name if _cd else _cn
+            _sc_lines.append(f"- 🎵 Live: {_name}")
+        if _sc_lines:
             st.markdown("\n".join(_sc_lines))
         else:
-            st.caption("ยังไม่ได้เลือก Member ใน Stage")
+            st.caption("ยังไม่ได้เลือก Member / Live ใน Game Board")
 
     # ── แหล่ง 2: Live สำเร็จ ────────────────────────────────────────────────
     with st.expander("🎵 Live สำเร็จ (เลือกการ์ดที่เล่นไปแล้ว)", expanded=True):
@@ -1207,7 +1205,7 @@ if _has_deck:
         _dl_col1, _ = st.columns([1, 3])
         with _dl_col1:
             _dl_n = st.number_input(
-                "จำนวน Live สำเร็จ", min_value=0, max_value=9, step=1,
+                "จำนวน Live สำเร็จ", min_value=0, max_value=2, step=1,
                 key="wr_done_live_count",
             )
         _live_opts_wr = [""] + _live_nos_wr
@@ -1238,52 +1236,114 @@ if _has_deck:
                         unsafe_allow_html=True,
                     )
 
-    # ── แหล่ง 3: มือ (สุ่มตามสัดส่วน Deck) ──────────────────────────────────
-    with st.expander("✋ มือ (สุ่มตามสัดส่วน Deck)", expanded=True):
-        _hc1, _hc2 = st.columns([1, 3])
-        with _hc1:
-            st.number_input(
-                "จำนวนการ์ดในมือ", min_value=0, max_value=20, value=4,
-                key="wr_hand_n",
-                help="การ์ดในมือจะสุ่มออกจาก Deck ตามสัดส่วน Trigger color",
-            )
-        with _hc2:
-            st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
-            st.button(
-                "🎲 สุ่มการ์ดในมือใหม่", key="btn_resample_hand",
-                on_click=_resample_hand_callback, use_container_width=True,
-                help="สุ่มการ์ดในมือใหม่ — แหล่งอื่นจะยังคงเดิม",
-            )
+    # ── Step 1: คำนวณจำนวนการ์ดรวม ───────────────────────────────────────────
+    _fixed_out = _fixed_source1 + st.session_state.get("wr_done_live_count", 0)
+    _deck_total = deck.total()
+    _remaining_for_unknown = max(0, _deck_total - _fixed_out)
+    _current_hand_n = st.session_state.get("wr_hand_n", 0)
+    _max_hand = _remaining_for_unknown
+    _max_wr_extra = max(0, _remaining_for_unknown - _current_hand_n)
+    _current_wr_extra_n = st.session_state.get("wr_extra_n", 0)
+    _n_unknown = _current_hand_n + _current_wr_extra_n  # การ์ดที่ไม่รู้สี
+    _total_out = _fixed_out + _n_unknown
+    _remaining_in_deck_pre = max(0, _deck_total - _total_out)
 
-    # ── แหล่ง 4: Waiting Room (การ์ดที่ออกไปใน Turn ก่อน) ───────────────────
-    with st.expander("🗑️ Waiting Room จาก Turn ก่อน (สุ่มหากไม่ทราบ)", expanded=True):
-        _wec1, _wec2 = st.columns([1, 3])
-        with _wec1:
-            st.number_input(
-                "จำนวนการ์ด", min_value=0, max_value=59, value=0,
-                key="wr_extra_n",
-                help="การ์ดที่อยู่ใน Waiting Room จาก Turn ก่อนหน้า",
-            )
-        with _wec2:
-            st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
-            st.button(
-                "🎲 สุ่ม Waiting Room", key="btn_resample_wr_extra",
-                on_click=_resample_wr_extra_callback, use_container_width=True,
-                help="สุ่มการ์ดที่อยู่ใน Waiting Room ตามสัดส่วน Deck",
-            )
+    # reset sample cache ถ้าจำนวนเปลี่ยนหลังสุ่มครั้งล่าสุด
+    if st.session_state.get("_wr_merged_total") is not None and (
+        st.session_state.get("_wr_merged_hand_n") != _current_hand_n
+        or st.session_state.get("_wr_merged_extra_n") != _current_wr_extra_n
+        or st.session_state.get("_wr_merged_fixed_out") != _fixed_out
+    ):
+        st.session_state["_wr_merged_total"] = None
+        st.session_state["_wr_unknown_sample"] = None
 
-    # ── ปุ่มรวมทั้ง 4 แหล่ง ──────────────────────────────────────────────────
-    st.button(
-        "✅ อัปเดต Waiting Room", key="btn_apply_wr_gb",
-        on_click=_recalculate_wr_callback, use_container_width=False, type="primary",
-        help="รวม Stage + Live สำเร็จ + มือ + Waiting Room แล้วเขียนลงตาราง",
-    )
+    # แสดง Step 1 summary
+    _step1_parts = []
+    if _fixed_source1 > 0:
+        _step1_parts.append(f"Stage+Board **{_fixed_source1}** ใบ")
+    _done_n_s1 = st.session_state.get("wr_done_live_count", 0)
+    if _done_n_s1 > 0:
+        _step1_parts.append(f"Live สำเร็จ **{_done_n_s1}** ใบ")
+    if _current_hand_n > 0:
+        _step1_parts.append(f"มือ **{_current_hand_n}** ใบ")
+    if _current_wr_extra_n > 0:
+        _step1_parts.append(f"WR turn ก่อน **{_current_wr_extra_n}** ใบ")
+    _step1_str = " + ".join(_step1_parts) if _step1_parts else "ยังไม่มีข้อมูล"
+
+    _ic1, _ic2, _ic3 = st.columns(3)
+    with _ic1:
+        st.metric("ออกจาก Deck", f"{_total_out} ใบ")
+    with _ic2:
+        st.metric("คงเหลือใน Deck", f"{_remaining_in_deck_pre} ใบ")
+    with _ic3:
+        st.metric("ยังไม่รู้สี (มือ+WR)", f"{_n_unknown} ใบ")
+    if _step1_parts:
+        st.caption(f"↳ {_step1_str}")
+
+    # ── Input จำนวนมือและ WR turn ก่อน ──────────────────────────────────────
+    _nc1, _nc2 = st.columns(2)
+    with _nc1:
+        st.number_input(
+            "✋ จำนวนการ์ดในมือ", min_value=0, max_value=_max_hand, value=min(4, _max_hand),
+            key="wr_hand_n",
+            help="การ์ดในมือของคุณ (ยังอยู่ในมือ ไม่ได้ลง Waiting Room)",
+        )
+    with _nc2:
+        st.number_input(
+            "🗑️ การ์ดใน WR จาก Turn ก่อน", min_value=0, max_value=_max_wr_extra, value=0,
+            key="wr_extra_n",
+            help="การ์ดที่อยู่ใน Waiting Room จาก Turn ก่อนหน้า",
+        )
+
+    # ── Step 2: ปุ่มสุ่มเดียว ────────────────────────────────────────────────
+    _has_unknown = (_current_hand_n + _current_wr_extra_n) > 0
+    _has_sample = st.session_state.get("_wr_unknown_sample") is not None
+    _btn_label = "🎲 สุ่มการ์ดที่ยังไม่รู้สีใหม่" if _has_sample else "🎲 สุ่มการ์ดที่ยังไม่รู้สี"
+    if _has_unknown:
+        st.button(
+            _btn_label, key="btn_resample_all",
+            on_click=_resample_all_callback, type="primary", use_container_width=False,
+            help=f"สุ่มการแจกสีของการ์ด {_current_hand_n + _current_wr_extra_n} ใบที่ยังไม่รู้สีตามสัดส่วน Deck",
+        )
+    else:
+        st.caption("ℹ️ ไม่มีการ์ดที่ยังไม่รู้สี (มือ+WR = 0)")
+
+    # แสดงผลการสุ่มล่าสุด (Deck ที่เหลือ)
+    _unknown_sample = st.session_state.get("_wr_unknown_sample")
+    if _unknown_sample is not None:
+        _fixed_counts = _build_known_fixed_counts()
+        _rem_rows = []
+        for _c in Color.trigger_colors():
+            _rem = max(0, deck.count(_c) - _fixed_counts[_c.value] - _unknown_sample.get(_c.value, 0))
+            if _rem > 0:
+                _rem_rows.append({"ประเภท": color_label(_c), "เหลือใน Deck": _rem, "ออกไปแล้ว": deck.count(_c) - _rem})
+        _rem_all = max(0, deck.all_trigger - _fixed_counts["all"] - _unknown_sample.get("all", 0))
+        if _rem_all > 0 or deck.all_trigger > 0:
+            _rem_rows.append({"ประเภท": f"{COLOR_EMOJI[Color.ALL]} All Trigger", "เหลือใน Deck": _rem_all, "ออกไปแล้ว": deck.all_trigger - _rem_all})
+        _fixed_sp = _fixed_counts["score_plus_drawn"]
+        _unk_sp = _unknown_sample.get("score_plus_drawn", 0)
+        _unk_non_plain = _unknown_sample.get("non", 0) - _unk_sp
+        _rem_sp = max(0, deck_sp - _fixed_sp - _unk_sp)
+        _rem_non_plain = max(0, deck_non_plain - max(0, _fixed_counts["non"] - _fixed_sp) - _unk_non_plain)
+        if deck_non_plain > 0:
+            _rem_rows.append({"ประเภท": "⬛ Non-Trigger (ธรรมดา)", "เหลือใน Deck": _rem_non_plain, "ออกไปแล้ว": deck_non_plain - _rem_non_plain})
+        if deck_sp > 0:
+            _rem_rows.append({"ประเภท": "⭐ Score+ Live", "เหลือใน Deck": _rem_sp, "ออกไปแล้ว": deck_sp - _rem_sp})
+        with st.expander("📊 Deck ที่เหลือ (จากการสุ่มล่าสุด)", expanded=True):
+            if _rem_rows:
+                st.dataframe(pd.DataFrame(_rem_rows), hide_index=True, use_container_width=True)
+
+    st.divider()
+
+    # ── Step 3: Input การ์ดที่ออกจาก Deck (แก้ไขได้) ─────────────────────────
+    st.markdown("**📝 การ์ดที่ออกจาก Deck — ปรับแก้ได้ตามต้องการ**")
+    st.caption("ค่าจากการสุ่มจะถูกเติมให้อัตโนมัติ แต่สามารถแก้ไขเองได้")
 
     # clamp WR session state values ให้ไม่เกิน deck count ปัจจุบัน
     for _wr_key, _wr_max in [
         ("wr_red", deck_red), ("wr_blue", deck_blue), ("wr_green", deck_green),
         ("wr_yellow", deck_yellow), ("wr_purple", deck_purple), ("wr_pink", deck_pink),
-        ("wr_all", deck_all), ("wr_non", deck_non),
+        ("wr_all", deck_all), ("wr_non_plain", deck_non_plain),
     ]:
         if st.session_state.get(_wr_key, 0) > _wr_max:
             st.session_state[_wr_key] = _wr_max
@@ -1301,7 +1361,11 @@ if _has_deck:
     with _wrc[3]:
         wr_all = st.number_input(f"{COLOR_EMOJI[Color.ALL]} All Trigger",
                                  min_value=0, max_value=deck_all, key="wr_all")
-        wr_non = st.number_input("⬛ Non-Trigger", min_value=0, max_value=deck_non, key="wr_non")
+        wr_non_plain = st.number_input(
+            "⬛ Non-Trigger (ธรรมดา)",
+            min_value=0, max_value=deck_non_plain, key="wr_non_plain",
+            help="Non-Trigger ธรรมดาที่ออกไปแล้ว (ไม่นับ Score+ Live)",
+        )
 
     # Score+ Live card ที่ออกจาก Deck แล้ว
     _sp_deck_total = _calc_deck_score_plus_count()
@@ -1327,6 +1391,7 @@ if _has_deck:
         wr_sp_count = _sp_auto + wr_sp_extra
     else:
         wr_sp_count = 0
+    wr_non = wr_non_plain + wr_sp_count  # total non-trigger = plain + Score+
 
     waiting = WaitingRoom(
         trigger_counts={
@@ -1338,18 +1403,24 @@ if _has_deck:
         score_plus_count=wr_sp_count,
     )
     wr_total = waiting.total()
-    if wr_total > total:
-        st.error(f"⚠️ การ์ดที่ออกจาก Deck = **{wr_total}** ใบ เกินจำนวน Deck ({total} ใบ) — กรุณาตรวจสอบข้อมูล")
-    elif wr_sp_count > wr_non:
+    _hand_n = _current_hand_n
+    _all_out = _total_out
+    _cards_not_in_redeck = _hand_n
+    _redeck_size = max(0, _all_out - _cards_not_in_redeck)
+    _remaining_in_deck = _remaining_in_deck_pre
+    _non_plain_in_deck = deck_non_plain
+    _sp_min_required = max(0, wr_non_plain - _non_plain_in_deck)
+    if _all_out > total:
+        st.error(f"⚠️ การ์ดที่ออกจาก Deck = **{_all_out}** ใบ เกินจำนวน Deck ({total} ใบ) — กรุณาตรวจสอบข้อมูล")
+    elif _sp_min_required > 0 and wr_sp_count < _sp_min_required:
         st.warning(
-            f"⚠️ Score+ Live ที่ออกไป ({wr_sp_count} ใบ) มากกว่า Non-Trigger ใน Waiting Room ({wr_non} ใบ) — "
-            "Score+ Live card เป็น Non-Trigger ด้วย กรุณาตรวจสอบค่า Non-Trigger"
+            f"⚠️ Non-Trigger ธรรมดาที่ออกไป ({wr_non_plain} ใบ) เกินกว่าที่มีใน Deck ({_non_plain_in_deck} ใบ) — "
+            f"Score+ Live ต้องออกไปแล้วอย่างน้อย **{_sp_min_required}** ใบ แต่กรอกไว้ {wr_sp_count} ใบ กรุณาตรวจสอบ"
         )
-    else:
-        _sp_in_wr_note = f" (รวม Score+ Live {wr_sp_count} ใบ)" if wr_sp_count > 0 else ""
-        st.info(
-            f"การ์ดที่ออกจาก Deck = **{wr_total}** ใบ{_sp_in_wr_note} | "
-            f"คงเหลือใน Deck = **{total - wr_total}** ใบ"
+    elif _remaining_in_deck == 0 and _redeck_size > 0:
+        st.warning(
+            f"⚠️ Deck หมดแล้ว — **Redeck**: {_redeck_size} ใบ (ทุกการ์ดที่ออกจาก Deck ยกเว้นมือ {_hand_n} ใบ) "
+            f"จะถูก shuffle กลับเป็น Deck ใหม่"
         )
 
 else:
@@ -1364,7 +1435,7 @@ else:
         for _wr_key, _wr_max in [
             ("wr_red", deck_red), ("wr_blue", deck_blue), ("wr_green", deck_green),
             ("wr_yellow", deck_yellow), ("wr_purple", deck_purple), ("wr_pink", deck_pink),
-            ("wr_all", deck_all), ("wr_non", deck_non),
+            ("wr_all", deck_all), ("wr_non_plain", deck_non_plain),
         ]:
             if st.session_state.get(_wr_key, 0) > _wr_max:
                 st.session_state[_wr_key] = _wr_max
@@ -1377,15 +1448,17 @@ else:
         wr_pink = st.number_input(color_label(Color.PINK), min_value=0, max_value=deck_pink, key="wr_pink", value=0)
         wr_all = st.number_input(f"{COLOR_EMOJI[Color.ALL]} All Trigger",
                                  min_value=0, max_value=deck_all, key="wr_all", value=0)
-        wr_non = st.number_input("⬛ Non-Trigger", min_value=0, max_value=deck_non, key="wr_non", value=0)
-
+        wr_non_plain = st.number_input(
+            "⬛ Non-Trigger (ธรรมดา)",
+            min_value=0, max_value=deck_non_plain, key="wr_non_plain", value=0,
+            help="Non-Trigger ธรรมดาที่ออกไปแล้ว (ไม่นับ Score+ Live)",
+        )
         wr_sp_manual = st.number_input(
             "⭐ Score+ Live ที่ออกจาก Deck",
-            min_value=0, max_value=12, key="wr_sp_manual", value=0,
-            help="จำนวน Score+ Live card ที่ออกจาก Deck ไปแล้ว (มือ / Waiting Room / เล่นไปแล้ว) — Score+ Live นับรวมอยู่ใน Non-Trigger ด้วย",
+            min_value=0, max_value=deck_sp, key="wr_sp_manual", value=0,
+            help="จำนวน Score+ Live card ที่ออกจาก Deck ไปแล้ว",
         )
-        if wr_sp_manual > 0:
-            st.caption("⚠️ Score+ Live card เป็น Non-Trigger ด้วย — ตรวจสอบว่านับรวมอยู่ใน Non-Trigger ข้างบนแล้ว")
+        wr_non = wr_non_plain + wr_sp_manual  # total non-trigger = plain + Score+
 
         st.number_input(
             "จำนวนใบที่ออกจาก Deck", min_value=1, max_value=59, value=10,
@@ -1405,6 +1478,8 @@ else:
             score_plus_count=wr_sp_manual,
         )
         wr_total = waiting.total()
+        _all_out = wr_total
+        _remaining_in_deck = total - _all_out
         if wr_sp_manual > wr_non:
             st.warning(
                 f"⚠️ Score+ Live ที่ออกไป ({wr_sp_manual} ใบ) มากกว่า Non-Trigger ใน Waiting Room ({wr_non} ใบ) — "
@@ -1412,7 +1487,7 @@ else:
             )
         else:
             _sp_note = f" (รวม Score+ Live {wr_sp_manual} ใบ)" if wr_sp_manual > 0 else ""
-            st.info(f"การ์ดที่ออกจาก Deck = **{wr_total}** ใบ{_sp_note} | คงเหลือใน Deck = **{total - wr_total}** ใบ")
+            st.info(f"การ์ดที่ออกจาก Deck = **{_all_out}** ใบ{_sp_note} | คงเหลือใน Deck = **{max(0, _remaining_in_deck)}** ใบ")
 
     with col2:
         st.header("🎭 Stage Members")
@@ -1516,7 +1591,28 @@ st.divider()
 # ==========================================================================
 # CALCULATE
 # ==========================================================================
-state = GameState(deck=deck, waiting_room=waiting, stage=stage, lives=lives)
+# reshuffle_pool = waiting ลบมือออก (มือไม่ถูก shuffle กลับเข้า deck เมื่อ Redeck)
+# unknown_sample = ผลสุ่มรวม (มือ + WR_extra) ถ้ายังไม่ได้สุ่มให้ใช้ empty
+_unknown_sample_calc = st.session_state.get("_wr_unknown_sample") or _empty_counts()
+_n_hand_calc = st.session_state.get("wr_hand_n") or 0
+_n_unknown_calc = _n_hand_calc + (st.session_state.get("wr_extra_n") or 0)
+# ประมาณสัดส่วนมือจาก unknown_sample (มือ / unknown total)
+_hand_ratio = _n_hand_calc / _n_unknown_calc if _n_unknown_calc > 0 else 0
+_hand_sample: dict = {
+    k: round(v * _hand_ratio) for k, v in _unknown_sample_calc.items()
+}
+_hand_sp = _hand_sample.get("score_plus_drawn", 0)
+_hand_non_total = _hand_sample.get("non", 0) + _hand_sp
+_reshuffle_pool = WaitingRoom(
+    trigger_counts={
+        c: max(0, waiting.trigger_counts.get(c, 0) - _hand_sample.get(c.value, 0))
+        for c in Color.trigger_colors()
+    },
+    all_trigger=max(0, waiting.all_trigger - _hand_sample.get("all", 0)),
+    non_trigger=max(0, waiting.non_trigger - _hand_non_total),
+    score_plus_count=max(0, waiting.score_plus_count - _hand_sp),
+)
+state = GameState(deck=deck, waiting_room=waiting, stage=stage, lives=lives, reshuffle_pool=_reshuffle_pool)
 
 col_btn1, col_btn2 = st.columns([1, 3])
 with col_btn1:
@@ -1534,13 +1630,8 @@ if calc_btn:
     if errors:
         for e in errors:
             st.error(e)
-    elif waiting.total() > total:
-        st.error(f"⚠️ การ์ดที่ออกจาก Deck ({waiting.total()} ใบ) เกินจำนวน Deck ({total} ใบ) — กรุณาตรวจสอบ Waiting Room")
-    elif waiting.score_plus_count > waiting.non_trigger:
-        st.error(
-            f"⚠️ Score+ Live ที่ออกไป ({waiting.score_plus_count} ใบ) มากกว่า Non-Trigger ใน Waiting Room ({waiting.non_trigger} ใบ) — "
-            "Score+ Live card เป็น Non-Trigger ด้วย กรุณาตรวจสอบค่า Non-Trigger"
-        )
+    elif _all_out > total:
+        st.error(f"⚠️ การ์ดที่ออกจาก Deck ({_all_out} ใบ) เกินจำนวน Deck ({total} ใบ) — กรุณาตรวจสอบ Waiting Room")
     elif not combined_req:
         st.warning("กรุณาเลือก Live Card อย่างน้อย 1 ใบ (หรือกรอก required hearts)")
     else:
@@ -1583,14 +1674,14 @@ if calc_btn:
 
         # ── Summary metrics ────────────────────────────────────────────────
         col_r1, col_r2, col_r3, col_r4 = st.columns(4)
-        col_r1.metric("Deck ที่เหลือ", f"{total - wr_total} ใบ")
+        col_r1.metric("Deck ที่เหลือ", f"{max(0, _remaining_in_deck)} ใบ")
         col_r2.metric("Blade (จั่วได้)", f"{blade_count} ใบ")
         col_r3.metric("ต้องได้จาก Yell", f"{_total_need_from_yell} หัวใจ")
         col_r4.metric("Required รวม", f"{sum(combined_req.values())} หัวใจ")
 
         _will_reshuffle = blade_count > remaining.total()
         if _will_reshuffle:
-            _wr_size = waiting.total()
+            _wr_size = _reshuffle_pool.total()
             st.warning(
                 f"⚠️ **Mid-Yell Reshuffle** — Deck เหลือ {remaining.total()} ใบ แต่ต้อง Yell {blade_count} ใบ "
                 f"→ จะ reshuffle Waiting Room ({_wr_size} ใบ) ระหว่าง Yell\n\n"
@@ -1677,11 +1768,12 @@ if calc_btn:
             )
 
             _current_total_out = waiting.total()
+            _sens_max = deck.total() - 1
             _sens_total_out = st.number_input(
                 "จำนวนการ์ดที่ออกจาก Deck รวม (ในสถานการณ์จำลอง)",
                 min_value=0,
-                max_value=deck.total() - 1,
-                value=_current_total_out,
+                max_value=_sens_max,
+                value=min(_current_total_out, _sens_max),
                 step=1,
                 key="sens_total_out",
                 help=(

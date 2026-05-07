@@ -66,7 +66,8 @@ def simulate_live(state: GameState, trials: int = 20000, seed: int | None = None
         )
 
     deck_list = _build_card_list(remaining)
-    waiting_list = _build_card_list(state.waiting_room)
+    reshuffle_src = state.reshuffle_pool if state.reshuffle_pool is not None else state.waiting_room
+    waiting_list = _build_card_list(reshuffle_src)
     will_reshuffle = draws > N
 
     combined_req = state.combined_requirements()

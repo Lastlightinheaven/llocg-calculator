@@ -160,11 +160,16 @@ class StageMembers:
 class GameState:
     """
     Complete state needed to calculate Live success probability.
+
+    waiting_room: การ์ดทั้งหมดที่ออกจาก deck (ใช้คำนวณ remaining_deck)
+    reshuffle_pool: การ์ดที่จะถูก shuffle กลับเมื่อ deck หมด (WR จริงๆ ไม่รวมมือ/Stage/Board)
+                   ถ้าเป็น None หมายความว่าเท่ากับ waiting_room (เช่นใน manual mode)
     """
     deck: DeckComposition
     waiting_room: WaitingRoom
     stage: StageMembers
     lives: List[LiveRequirement]  # All lives to be played this turn (1-3)
+    reshuffle_pool: Optional[WaitingRoom] = None
 
     def remaining_deck(self) -> DeckComposition:
         """Compute the composition of cards still in the main deck."""
