@@ -85,6 +85,35 @@ def _prob_bar(probability: float) -> None:
     )
 
 
+def _render_failure_breakdown(sim) -> None:
+    """แสดงสาเหตุที่ Live ไม่สำเร็จจาก Monte Carlo trials"""
+    from models import COLOR_LABELS_TH, COLOR_EMOJI, Color
+    bd = sim.failure_breakdown
+    if bd is None:
+        return
+    total_fails = sim.trials - sim.successes
+    if total_fails <= 0:
+        return
+
+    with st.expander(f"🔍 สาเหตุที่ไม่สำเร็จ ({total_fails:,} trials)"):
+        rows = []
+        for color_val, count in sorted(bd.missing_specific_color.items(), key=lambda x: -x[1]):
+            try:
+                c = Color(color_val)
+                label = f"{COLOR_EMOJI.get(c, '')} ขาด Heart สี{COLOR_LABELS_TH.get(c, color_val)}"
+            except ValueError:
+                label = f"ขาด {color_val}"
+            rows.append({"สาเหตุ": label, "จำนวน trials": count, "% ของ fail": f"{count/total_fails*100:.1f}%"})
+
+        if bd.missing_total_hearts > 0:
+            rows.append({"สาเหตุ": "⚡ Heart รวมไม่พอ (Gray/Any)", "จำนวน trials": bd.missing_total_hearts, "% ของ fail": f"{bd.missing_total_hearts/total_fails*100:.1f}%"})
+        if bd.multiple_causes > 0:
+            rows.append({"สาเหตุ": "⚠️ ขาดหลายสีพร้อมกัน", "จำนวน trials": bd.multiple_causes, "% ของ fail": f"{bd.multiple_causes/total_fails*100:.1f}%"})
+
+        if rows:
+            st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+
+
 def _card_img_src(image: str) -> str:
     """
     แปลง image field เป็น src ที่ใช้ได้ใน <img> และ st.image().
@@ -1405,7 +1434,10 @@ if _has_deck:
     wr_total = waiting.total()
     _hand_n = _current_hand_n
     _all_out = _total_out
-    _cards_not_in_redeck = _hand_n
+    _stage_n = sum(1 for _si in range(5) if st.session_state.get(f"stage_slot_{_si}", ""))
+    _live_slot_n = sum(1 for _li in range(3) if st.session_state.get(f"live_slot_{_li}", ""))
+    _done_live_n = st.session_state.get("wr_done_live_count", 0)
+    _cards_not_in_redeck = _hand_n + _stage_n + _live_slot_n + _done_live_n
     _redeck_size = max(0, _all_out - _cards_not_in_redeck)
     _remaining_in_deck = _remaining_in_deck_pre
     _non_plain_in_deck = deck_non_plain
@@ -1418,8 +1450,16 @@ if _has_deck:
             f"Score+ Live ต้องออกไปแล้วอย่างน้อย **{_sp_min_required}** ใบ แต่กรอกไว้ {wr_sp_count} ใบ กรุณาตรวจสอบ"
         )
     elif _remaining_in_deck == 0 and _redeck_size > 0:
+        _excl_parts = [f"มือ {_hand_n} ใบ"]
+        if _stage_n:
+            _excl_parts.append(f"Stage {_stage_n} ใบ")
+        if _live_slot_n:
+            _excl_parts.append(f"Live ที่จะเล่น {_live_slot_n} ใบ")
+        if _done_live_n:
+            _excl_parts.append(f"Live สำเร็จ {_done_live_n} ใบ")
         st.warning(
-            f"⚠️ Deck หมดแล้ว — **Redeck**: {_redeck_size} ใบ (ทุกการ์ดที่ออกจาก Deck ยกเว้นมือ {_hand_n} ใบ) "
+            f"⚠️ Deck หมดแล้ว — **Redeck**: {_redeck_size} ใบ "
+            f"(ยกเว้น {', '.join(_excl_parts)} ที่ไม่ถูก shuffle กลับ) "
             f"จะถูก shuffle กลับเป็น Deck ใหม่"
         )
 
@@ -1591,25 +1631,71 @@ st.divider()
 # ==========================================================================
 # CALCULATE
 # ==========================================================================
-# reshuffle_pool = waiting ลบมือออก (มือไม่ถูก shuffle กลับเข้า deck เมื่อ Redeck)
-# unknown_sample = ผลสุ่มรวม (มือ + WR_extra) ถ้ายังไม่ได้สุ่มให้ใช้ empty
+# reshuffle_pool = waiting ลบการ์ดที่ไม่ถูก shuffle กลับออก:
+#   - มือ (hand) ไม่กลับ
+#   - Stage Member ไม่กลับ
+#   - Live card ที่จะเล่น ไม่กลับ
+#   - Live card ที่สำเร็จแล้ว ไม่กลับ
 _unknown_sample_calc = st.session_state.get("_wr_unknown_sample") or _empty_counts()
 _n_hand_calc = st.session_state.get("wr_hand_n") or 0
 _n_unknown_calc = _n_hand_calc + (st.session_state.get("wr_extra_n") or 0)
-# ประมาณสัดส่วนมือจาก unknown_sample (มือ / unknown total)
 _hand_ratio = _n_hand_calc / _n_unknown_calc if _n_unknown_calc > 0 else 0
 _hand_sample: dict = {
     k: round(v * _hand_ratio) for k, v in _unknown_sample_calc.items()
 }
 _hand_sp = _hand_sample.get("score_plus_drawn", 0)
 _hand_non_total = _hand_sample.get("non", 0) + _hand_sp
+
+# คำนวณ trigger ของการ์ดที่ไม่ถูก shuffle กลับ (Stage + Live slots + Live สำเร็จ)
+def _fixed_cards_trigger_counts() -> dict:
+    """คืน {color_value: count} ของ trigger จากการ์ดที่ไม่ถูก reshuffle กลับ"""
+    _idx = st.session_state.get("card_index", {})
+    counts: dict = {c.value: 0 for c in Color.trigger_colors()}
+    counts["all"] = 0
+    counts["non"] = 0
+    card_keys = []
+    for _si in range(5):
+        _k = st.session_state.get(f"stage_slot_{_si}", "")
+        if _k:
+            card_keys.append(_k)
+    for _li in range(3):
+        _k = st.session_state.get(f"live_slot_{_li}", "")
+        if _k:
+            card_keys.append(_k)
+    _done_n = st.session_state.get("wr_done_live_count", 0)
+    for _di in range(_done_n):
+        _k = st.session_state.get(f"wr_done_live_{_di}", "")
+        if _k:
+            card_keys.append(_k)
+    for _k in card_keys:
+        _card = _idx.get(_k) or _idx.get(strip_rarity_suffix(_k))
+        if _card is None:
+            counts["non"] += 1
+            continue
+        tc = getattr(_card, "trigger_color", None)
+        if tc and tc in counts:
+            counts[tc] += 1
+        elif tc == "all":
+            counts["all"] += 1
+        else:
+            counts["non"] += 1
+    return counts
+
+_fixed_trigger = _fixed_cards_trigger_counts()
+
 _reshuffle_pool = WaitingRoom(
     trigger_counts={
-        c: max(0, waiting.trigger_counts.get(c, 0) - _hand_sample.get(c.value, 0))
+        c: max(0, waiting.trigger_counts.get(c, 0)
+               - _hand_sample.get(c.value, 0)
+               - _fixed_trigger.get(c.value, 0))
         for c in Color.trigger_colors()
     },
-    all_trigger=max(0, waiting.all_trigger - _hand_sample.get("all", 0)),
-    non_trigger=max(0, waiting.non_trigger - _hand_non_total),
+    all_trigger=max(0, waiting.all_trigger
+                    - _hand_sample.get("all", 0)
+                    - _fixed_trigger.get("all", 0)),
+    non_trigger=max(0, waiting.non_trigger
+                    - _hand_non_total
+                    - _fixed_trigger.get("non", 0)),
     score_plus_count=max(0, waiting.score_plus_count - _hand_sp),
 )
 state = GameState(deck=deck, waiting_room=waiting, stage=stage, lives=lives, reshuffle_pool=_reshuffle_pool)
@@ -1735,6 +1821,7 @@ if calc_btn:
                     f"สำเร็จ {sim.successes:,} / {sim.trials:,} trials · "
                     f"ต่างจาก Exact = {diff:.2f}%  |  {_diff_note}"
                 )
+                _render_failure_breakdown(sim)
 
         # ── Score+ probability ────────────────────────────────────────────
         # Score+ ติดอยู่กับ Live card ใน Deck — เมื่อ Yell เปิดเจอ Live card ที่มี Score+

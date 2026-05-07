@@ -13,15 +13,48 @@ from probability import _check_hearts_satisfy
 
 
 @dataclass
+class FailureBreakdown:
+    missing_specific_color: Dict[str, int]  # color_value -> count of trials failed due to that color
+    missing_total_hearts: int               # failed because total hearts < total required
+    multiple_causes: int                    # failed due to more than one missing color simultaneously
+
+    def total_fails(self) -> int:
+        return sum(self.missing_specific_color.values()) + self.missing_total_hearts + self.multiple_causes
+
+
+@dataclass
 class SimulationResult:
     probability: float
     successes: int
     trials: int
     draws: int
     deck_size: int
+    failure_breakdown: FailureBreakdown | None = None
 
     def percent(self) -> float:
         return self.probability * 100.0
+
+
+def _find_missing_colors(
+    hearts_total: Dict[Color, int],
+    wildcard_hearts: int,
+    requirements: Dict[Color, int],
+) -> List[str]:
+    """คืน list ของ color.value ที่ขาด (เฉพาะ specific color, ไม่รวม gray)"""
+    wildcards_left = wildcard_hearts
+    missing = []
+    for color, req in requirements.items():
+        if color == Color.GRAY:
+            continue
+        have = hearts_total.get(color, 0)
+        if have >= req:
+            continue
+        shortfall = req - have
+        if wildcards_left >= shortfall:
+            wildcards_left -= shortfall
+        else:
+            missing.append(color.value)
+    return missing
 
 
 def _build_card_list(composition, extra_exclude: List[str] | None = None) -> List[str]:
@@ -73,20 +106,21 @@ def simulate_live(state: GameState, trials: int = 20000, seed: int | None = None
     combined_req = state.combined_requirements()
     successes = 0
 
+    fail_specific: Dict[str, int] = {}
+    fail_total_hearts = 0
+    fail_multiple = 0
+
     for _ in range(trials):
         drawn: Dict[Color, int] = {}
         all_drawn = 0
 
         if not will_reshuffle:
-            # กรณีปกติ: draw จาก deck เพียง pool เดียว
             sample = rng.sample(deck_list, draws)
             yelled = sample
         else:
-            # Phase 1: draw การ์ดที่เหลือใน deck ออกมาทั้งหมด
             phase1 = list(deck_list)
             rng.shuffle(phase1)
 
-            # Phase 2: reshuffle waiting room (ลบใบที่ Yell ออกไปแล้วใน phase 1)
             remaining_wl = list(waiting_list)
             for tag in phase1:
                 if tag in remaining_wl:
@@ -110,12 +144,34 @@ def simulate_live(state: GameState, trials: int = 20000, seed: int | None = None
             color: state.stage.hearts_for_color(color) + drawn.get(color, 0)
             for color in Color.trigger_colors()
         }
+
         if _check_hearts_satisfy(
             hearts_by_color=hearts_total,
             wildcard_hearts=all_drawn,
             requirements=combined_req,
         ):
             successes += 1
+        else:
+            missing_colors = _find_missing_colors(hearts_total, all_drawn, combined_req)
+            total_collected = sum(hearts_total.values()) + all_drawn
+            total_required = sum(combined_req.values())
+
+            if missing_colors:
+                if len(missing_colors) > 1:
+                    fail_multiple += 1
+                else:
+                    key = missing_colors[0]
+                    fail_specific[key] = fail_specific.get(key, 0) + 1
+            elif total_collected < total_required:
+                fail_total_hearts += 1
+            else:
+                fail_multiple += 1
+
+    breakdown = FailureBreakdown(
+        missing_specific_color=fail_specific,
+        missing_total_hearts=fail_total_hearts,
+        multiple_causes=fail_multiple,
+    )
 
     return SimulationResult(
         probability=successes / trials if trials else 0,
@@ -123,4 +179,5 @@ def simulate_live(state: GameState, trials: int = 20000, seed: int | None = None
         trials=trials,
         draws=draws,
         deck_size=N,
+        failure_breakdown=breakdown,
     )
