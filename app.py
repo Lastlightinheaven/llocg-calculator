@@ -620,8 +620,9 @@ def _render_deck_gallery_body() -> None:
                     caption = f"×{count}"
                     if card.trigger_color is not None:
                         caption = f"{COLOR_EMOJI.get(card.trigger_color, '')} {caption}"
-                    if card.image:
-                        st.image(_card_img_src(card.image), caption=caption, use_container_width=True)
+                    _src = _card_img_src(card.image) if card.image else ""
+                    if _src:
+                        st.image(_src, caption=caption, use_container_width=True)
                     else:
                         st.caption(f"{card.card_no}\n{caption}")
                     st.caption(f"`{card.card_no}`")
