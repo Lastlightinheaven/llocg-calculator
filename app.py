@@ -117,6 +117,7 @@ div[data-testid="stButton"] > button:hover {
     border-top: 3px solid var(--llocg-pink) !important;
     border-radius: 12px !important;
     box-shadow: var(--llocg-shadow) !important;
+    padding: 1rem 1.25rem !important;
 }
 [data-testid="stMetricLabel"] {
     color: var(--llocg-pink) !important;
@@ -129,17 +130,23 @@ div[data-testid="stButton"] > button:hover {
     border-radius: 12px !important;
     overflow: hidden !important;
 }
+[data-testid="stExpander"] summary {
+    display: flex !important;
+    align-items: center !important;
+}
 [data-testid="stExpander"] summary::before {
     content: "▶";
     font-size: 0.7em;
     color: var(--llocg-pink);
     margin-right: 6px;
+    flex-shrink: 0;
 }
 details[open] > summary::before { content: "▼"; }
-[data-testid="stExpander"] summary > span:first-child {
-    visibility: hidden !important;
-    width: 0 !important;
-    overflow: hidden !important;
+/* ซ่อนเฉพาะ icon span (span ที่มี class ขึ้นต้นด้วย st-emotion-cache และไม่มีข้อความ) */
+[data-testid="stExpander"] summary > span[data-testid="stExpanderToggleIcon"],
+[data-testid="stExpander"] summary > div > svg,
+[data-testid="stExpander"] summary svg {
+    display: none !important;
 }
 
 /* ── Tabs ── */
@@ -174,6 +181,18 @@ details[open] > summary::before { content: "▼"; }
     border: none !important;
     box-shadow: none !important;
     outline: none !important;
+}
+
+/* ── Widget labels — คืนให้แสดงเสมอ ── */
+[data-testid="stWidgetLabel"],
+[data-testid="stWidgetLabel"] p,
+[data-testid="stWidgetLabel"] label,
+label[data-testid] {
+    visibility: visible !important;
+    width: auto !important;
+    overflow: visible !important;
+    height: auto !important;
+    opacity: 1 !important;
 }
 
 /* ── Selectbox ── */
@@ -693,7 +712,7 @@ def _apply_board_to_inputs() -> None:
     st.session_state["n_lives_gb"] = max(1, min(3, len(filled_slots)))
 
 
-def _render_card_picker_grid(card_nos: list, slot_key: str, cols: int = 4) -> None:
+def _render_card_picker_grid(card_nos: list, slot_key: str, cols: int = 4, card_w: int = 260) -> None:
     """
     แสดง image grid ให้ user คลิกเลือกการ์ด — เขียน card_no ลง session_state[slot_key].
     รูปการ์ดกดได้โดยตรง: selected = border ชมพู + overlay ✓, unselected = กดเพื่อเลือก
@@ -723,9 +742,9 @@ def _render_card_picker_grid(card_nos: list, slot_key: str, cols: int = 4) -> No
             continue
         with grid_cols[j % cols]:
             is_selected = (card_no == selected)
-            border = "3px solid #e91e63" if is_selected else "2px solid transparent"
+            border = "3px solid #e91e8c" if is_selected else "2px solid transparent"
             overlay = (
-                '<div style="position:absolute;inset:0;background:rgba(233,30,99,0.18);'
+                '<div style="position:absolute;inset:0;background:rgba(233,30,140,0.22);'
                 'display:flex;align-items:center;justify-content:center;'
                 'font-size:2em;color:#fff;border-radius:7px;">✓</div>'
                 if is_selected else ""
@@ -733,12 +752,11 @@ def _render_card_picker_grid(card_nos: list, slot_key: str, cols: int = 4) -> No
             name_tip = card.name or card_no
             st.markdown(
                 f'<div style="position:relative;border:{border};border-radius:8px;'
-                f'overflow:hidden;margin-bottom:6px;" title="{name_tip}">'
+                f'overflow:hidden;margin-bottom:6px;max-width:{card_w}px;margin-left:auto;margin-right:auto;" title="{name_tip}">'
                 f'<img src="{_card_img_src(card.image)}" style="width:100%;display:block;">'
                 f'{overlay}</div>',
                 unsafe_allow_html=True,
             )
-            # ปุ่มชื่อสั้น ๆ ใต้รูป — compact และกดได้ง่าย
             btn_label = f"✓ {name_tip}" if is_selected else name_tip
             if st.button(btn_label, key=f"pick_{slot_key}_{card_no}",
                          use_container_width=True,
@@ -831,7 +849,7 @@ def _render_game_board() -> None:
                 f'🃏 เลือก Live card สำหรับ Slot {_active_live + 1}</p>',
                 unsafe_allow_html=True,
             )
-            _render_card_picker_grid(live_nos, f"live_slot_{_active_live}", cols=3)
+            _render_card_picker_grid(live_nos, f"live_slot_{_active_live}", cols=3, card_w=260)
 
         st.markdown(
             '<hr style="border:none;border-top:2px solid #f8bbd0;margin:12px 0 10px 0;">',
@@ -894,7 +912,7 @@ def _render_game_board() -> None:
                 f'🃏 เลือก Member สำหรับ {pos_labels[_active_stage]}</p>',
                 unsafe_allow_html=True,
             )
-            _render_card_picker_grid(member_nos, f"stage_slot_{_active_stage}", cols=6)
+            _render_card_picker_grid(member_nos, f"stage_slot_{_active_stage}", cols=6, card_w=150)
 
 
 def _apply_live_card_to_form(live_idx) -> None:
