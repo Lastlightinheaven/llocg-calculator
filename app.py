@@ -32,6 +32,189 @@ st.set_page_config(
     layout="wide",
 )
 
+st.markdown("""
+<style>
+/* ── Import fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;600;700;800&display=swap');
+
+/* ════════════════════════════
+   COLOR TOKENS (Dark theme + Pink accent)
+   ════════════════════════════ */
+:root {
+    --llocg-pink:      #e91e8c;
+    --llocg-pink-dark: #c4177a;
+    --llocg-pink-light:#4a1535;
+    --llocg-pink-pale: #2d0a2e;
+    --llocg-text:      #f0e6ff;
+    --llocg-text-sub:  #c4a8d4;
+    --llocg-card:      #2d1040;
+    --llocg-border:    #6b2d6b;
+    --llocg-shadow:    0 2px 12px rgba(233,30,140,0.2);
+    --llocg-shadow-md: 0 4px 20px rgba(233,30,140,0.3);
+}
+
+/* ════════════════════════════
+   BASE — ปล่อยให้ Streamlit dark theme ทำงาน
+   เราแค่เพิ่ม pink accent ทับ
+   ════════════════════════════ */
+html, body {
+    font-family: 'Noto Sans Thai', 'Noto Sans', sans-serif !important;
+}
+
+/* ── Headers ── */
+h1 {
+    font-weight: 800 !important;
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+    background: var(--llocg-pink) !important;
+    padding: 0.55em 1.2em !important;
+    border-radius: 0 0 16px 16px !important;
+    margin-bottom: 1.2em !important;
+    box-shadow: var(--llocg-shadow-md) !important;
+}
+h2 {
+    font-weight: 700 !important;
+    color: var(--llocg-pink) !important;
+    -webkit-text-fill-color: var(--llocg-pink) !important;
+    border-bottom: 2px solid var(--llocg-border) !important;
+    padding-bottom: 0.3em !important;
+}
+h3 {
+    font-weight: 700 !important;
+    color: var(--llocg-pink) !important;
+    -webkit-text-fill-color: var(--llocg-pink) !important;
+}
+
+/* ── Buttons ── */
+div[data-testid="stButton"] > button {
+    background: var(--llocg-pink) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    padding: 0.45em 1.4em !important;
+    box-shadow: 0 2px 8px rgba(233,30,140,0.4) !important;
+    transition: all 0.15s ease !important;
+}
+div[data-testid="stButton"] > button:hover {
+    background: var(--llocg-pink-dark) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 14px rgba(233,30,140,0.55) !important;
+}
+[data-testid="stNumberInput"] button {
+    background: var(--llocg-pink) !important;
+    color: #fff !important;
+    border: none !important;
+}
+[data-testid="stNumberInput"] button:hover {
+    background: var(--llocg-pink-dark) !important;
+}
+
+/* ── Metrics ── */
+[data-testid="stMetric"] {
+    background: var(--llocg-card) !important;
+    border: 1.5px solid var(--llocg-border) !important;
+    border-top: 3px solid var(--llocg-pink) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--llocg-shadow) !important;
+}
+[data-testid="stMetricLabel"] {
+    color: var(--llocg-pink) !important;
+    font-weight: 700 !important;
+}
+
+/* ── Expander ── */
+[data-testid="stExpander"] {
+    border: 1.5px solid var(--llocg-border) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+}
+[data-testid="stExpander"] summary::before {
+    content: "▶";
+    font-size: 0.7em;
+    color: var(--llocg-pink);
+    margin-right: 6px;
+}
+details[open] > summary::before { content: "▼"; }
+[data-testid="stExpander"] summary > span:first-child {
+    visibility: hidden !important;
+    width: 0 !important;
+    overflow: hidden !important;
+}
+
+/* ── Tabs ── */
+[data-testid="stTabs"] [role="tab"] {
+    font-weight: 700 !important;
+    color: var(--llocg-pink) !important;
+    border-radius: 8px 8px 0 0 !important;
+}
+[data-testid="stTabs"] [role="tab"][aria-selected="true"] {
+    background: var(--llocg-pink) !important;
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+}
+
+/* ── Input wrapper ── */
+[data-testid="stNumberInput"] > div,
+[data-testid="stTextInput"] > div,
+[data-testid="stTextArea"] > div {
+    border: 1.5px solid var(--llocg-border) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    transition: border-color 0.15s, box-shadow 0.15s !important;
+}
+[data-testid="stNumberInput"] > div:focus-within,
+[data-testid="stTextInput"] > div:focus-within {
+    border-color: var(--llocg-pink) !important;
+    box-shadow: 0 0 0 3px rgba(233,30,140,0.2) !important;
+}
+[data-testid="stNumberInput"] input,
+[data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* ── Selectbox ── */
+[data-testid="stSelectbox"] > div > div {
+    border: 1.5px solid var(--llocg-border) !important;
+    border-radius: 12px !important;
+    transition: border-color 0.15s !important;
+}
+[data-testid="stSelectbox"] > div > div:focus-within {
+    border-color: var(--llocg-pink) !important;
+}
+[data-testid="stSelectbox"] svg { color: var(--llocg-pink) !important; }
+
+/* ── Alert ── */
+[data-testid="stAlert"] {
+    border-left: 4px solid var(--llocg-pink) !important;
+    border-radius: 10px !important;
+}
+
+/* ── Divider ── */
+hr {
+    border: none !important;
+    height: 2px !important;
+    background: linear-gradient(90deg, transparent, var(--llocg-pink), transparent) !important;
+    opacity: 0.4 !important;
+    margin: 1em 0 !important;
+}
+
+/* ── Caption ── */
+[data-testid="stCaptionContainer"] {
+    color: var(--llocg-text-sub) !important;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--llocg-pink-pale); border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: var(--llocg-pink); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--llocg-pink-dark); }
+</style>
+""", unsafe_allow_html=True)
+
 
 # ---------- Helpers ----------
 HEART_COLORS = [Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.PURPLE, Color.PINK]
