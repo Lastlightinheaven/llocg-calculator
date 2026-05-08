@@ -316,17 +316,21 @@ def _render_failure_breakdown(sim) -> None:
             st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
 
 
+_APP_DIR = Path(__file__).parent
+
 def _card_img_src(image: str) -> str:
     """
     แปลง image field เป็น src ที่ใช้ได้ใน <img> และ st.image().
     - ถ้าเป็น URL (http/https) → คืนตรงๆ
-    - ถ้าเป็น local path → encode เป็น data URI (base64)
+    - ถ้าเป็น local path → resolve relative to app.py dir แล้ว encode base64
     """
     if not image:
         return ""
     if image.startswith("http://") or image.startswith("https://"):
         return image
     p = Path(image)
+    if not p.is_absolute():
+        p = _APP_DIR / p
     if not p.exists():
         return ""
     data = base64.b64encode(p.read_bytes()).decode()
