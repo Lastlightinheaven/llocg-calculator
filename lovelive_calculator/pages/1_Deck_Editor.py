@@ -122,7 +122,7 @@ div[data-testid="stSelectbox"] div[data-baseweb="select"] {
     top: 50%;
     transform: translateY(-50%);
     margin-left: 10px;
-    width: 260px;
+    width: 208px;
     background: #1a0a2e;
     border: 2px solid var(--llocg-pink);
     border-radius: 12px;
