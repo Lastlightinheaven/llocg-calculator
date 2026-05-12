@@ -1,0 +1,38 @@
+{
+  "Format": "1.0.0",
+  "Name": "Sample",
+  "Date": "2025/12/29 22:20:03",
+  "Description": "Sample set.",
+  "Members": {
+    "PL!N-sd1-001-SD": 2,
+    "PL!N-sd1-002-SD": 2,
+    "PL!N-sd1-003-SD": 2,
+    "PL!N-sd1-004-SD": 2,
+    "PL!N-sd1-005-SD": 2,
+    "PL!N-sd1-006-SD": 2,
+    "PL!N-sd1-007-SD": 2,
+    "PL!N-sd1-008-SD": 2,
+    "PL!N-sd1-009-SD": 2,
+    "PL!N-sd1-010-SD": 2,
+    "PL!N-sd1-011-SD": 2,
+    "PL!N-sd1-012-SD": 2,
+    "PL!N-sd1-013-SD": 2,
+    "PL!N-sd1-014-SD": 2,
+    "PL!N-sd1-015-SD": 2,
+    "PL!N-sd1-016-SD": 2,
+    "PL!N-sd1-017-SD": 2,
+    "PL!N-sd1-018-SD": 2,
+    "PL!N-sd1-019-SD": 2,
+    "PL!N-sd1-020-SD": 2,
+    "PL!N-sd1-021-SD": 2,
+    "PL!N-sd1-022-SD": 2,
+    "PL!N-sd1-023-SD": 2,
+    "PL!N-sd1-024-SD": 2
+  },
+  "Lives": {
+    "PL!N-sd1-025-SD": 4,
+    "PL!N-sd1-026-SD": 4,
+    "PL!N-sd1-027-SD": 2,
+    "PL!N-sd1-028-SD": 2
+  }
+}
