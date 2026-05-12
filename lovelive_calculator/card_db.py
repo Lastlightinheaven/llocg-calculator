@@ -38,11 +38,14 @@ _CARD_IMAGE_FOLDER_MAP: List[Tuple[str, str]] = [
     ("PL!HS-sd1",  "HSSD01"),
     ("PL!HS-",     "PBHS"),
     ("PL!N-sd1",   "NSD01"),
+    ("PL!N-bp1",   "BP01"),
     ("PL!N-",      "PBnj"),
     ("PL!S-sd1",   "SSD01"),
     ("PL!S-bp2",   "BP02"),
     ("PL!S-",      "PBLS"),
     ("PL!SP-sd1",  "SPSD01"),
+    ("PL!SP-bp1",  "BP01"),
+    ("PL!SP-bp2",  "BP02"),
     ("PL!SP-",     "PBSP"),
     ("PL!-sd1",    "PLSD01"),
     ("PL!-bp4",    "BP04"),
@@ -50,18 +53,60 @@ _CARD_IMAGE_FOLDER_MAP: List[Tuple[str, str]] = [
     ("PL!-pb1",    "PBLL"),
     ("PL!-",       "BP05"),
     ("LL-bp1",     "BP01"),
+    ("LL-bp2",     "BP02"),
     ("LL-",        "BP05"),
 ]
+
+# rarity suffix ที่เว็บใช้ชื่อต่างจาก Assets (global remap)
+_RARITY_REMAP = {
+    "R+": "R2",
+    "P+": "P2",
+    "L":  "L2",
+}
+
+# series prefix ที่ Assets ใช้ bp1 แต่เว็บใช้ pb1 (Premium Booster series)
+_BP1_TO_PB1_PREFIXES = ("PL!HS-", "PL!S-", "PL!SP-", "PL!-")
+
+# rarity ที่ไม่มีบนเว็บ — ไม่มี URL ที่ถูกต้อง ให้ return ""
+_RARITY_NOT_ON_WEB = {"N", "AR", "L"}
 
 def card_no_to_image_url(card_no: str) -> str:
     """คืน URL รูปการ์ดจาก llofficial-cardgame.com โดย map จาก card_no prefix."""
     cn = normalize_card_no(card_no)
-    # PR cards
-    if "-PR-" in cn or cn.endswith("-PR") or "PR" in cn.split("-")[-1]:
+
+    # ตรวจ rarity suffix ที่ไม่มีบนเว็บ
+    suffix = cn.split("-")[-1]
+    if suffix in _RARITY_NOT_ON_WEB:
+        return ""
+
+    # แปลง rarity suffix ถ้าเว็บใช้ชื่อต่าง
+    for old, new in _RARITY_REMAP.items():
+        if cn.endswith(f"-{old}"):
+            cn = cn[: -len(old)] + new
+            break
+
+    # PR cards — suffix -PR หรือ card_no ที่มี PR ในชื่อโดยตรง (เช่น PL!!PR001, PL!SPPR003)
+    last_part = cn.split("-")[-1]
+    if cn.endswith("-PR") or last_part.startswith("PR") or re.search(r'PR\d', cn):
         return f"{_CARD_IMAGE_BASE}/PR/{cn}.png"
+
+    # series ที่ใช้ bp1 ใน Assets แต่เว็บต้องการ pb1 → remap ก่อน lookup
+    # ยกเว้น PL!N-bp1 และ PL!SP-bp1 ที่อยู่ใน BP01 โดยไม่ต้อง remap
+    _BP1_KEEP_AS_IS = ("PL!N-bp1", "PL!SP-bp1")
+    cn_lookup = cn
+    if "-bp1-" in cn and not any(cn.startswith(p) for p in _BP1_KEEP_AS_IS):
+        for pfx in _BP1_TO_PB1_PREFIXES:
+            if cn.startswith(pfx):
+                cn_lookup = cn.replace("-bp1-", "-pb1-", 1)
+                # pb1 series ใช้ P2 แทน P
+                if cn_lookup.endswith("-P"):
+                    cn_lookup = cn_lookup + "2"
+                break
+
     for prefix, folder in _CARD_IMAGE_FOLDER_MAP:
-        if cn.startswith(prefix):
-            return f"{_CARD_IMAGE_BASE}/{folder}/{cn}.png"
+        if cn_lookup.startswith(prefix):
+            return f"{_CARD_IMAGE_BASE}/{folder}/{cn_lookup}.png"
+
     return ""
 
 # Normalize card_no ให้ตรงกันทั้ง DB และ decklog:
@@ -413,7 +458,8 @@ def load_from_assets_live() -> List[LiveCard]:
             continue
         seen.add(card_no_full)
 
-        img_path = card_no_to_image_url(card_no_full)
+        img_filename = parts[1] if len(parts) > 1 else ""
+        img_path = _assets_image_path("live", img_filename) if img_filename else card_no_to_image_url(card_no_full)
 
         required: Dict[Color, int] = {}
         for field_name, color in _ASSETS_HEART_FIELDS.items():
@@ -465,7 +511,8 @@ def load_from_assets_members() -> List[DeckCard]:
             if not card_no_full:
                 continue
 
-            img_path = card_no_to_image_url(card_no_full)
+            img_filename = parts[1] if len(parts) > 1 else ""
+            img_path = _assets_image_path(card_type, img_filename) if img_filename else card_no_to_image_url(card_no_full)
 
             _bh = obj.get("BladeHeart", "") or ""
             trigger_color, _sp = _parse_assets_bladeheart(_bh)
