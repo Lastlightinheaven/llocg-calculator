@@ -425,10 +425,20 @@ def _parse_assets_bladeheart(bh: str) -> Tuple[Optional[Color], int]:
 
 def _assets_image_path(card_type: str, filename: str) -> str:
     """คืน URL รูปการ์ดจาก llofficial-cardgame.com โดยใช้ filename จาก CardSubInfo."""
-    # filename เช่น "PL!HS-pb1-001-R.png" หรือ "PL!HS-pb1-001-R/PL!HS-pb1-001-R.png"
-    bare = Path(filename).name  # เอาแค่ชื่อไฟล์
+    bare = Path(filename).name
     card_no = bare.replace(".png", "").replace(".PNG", "")
-    return card_no_to_image_url(card_no)
+    url = card_no_to_image_url(card_no)
+
+    # BP03 ใช้ format พิเศษ: PL!-bp3-{RARITY}-{NUM}-{RARITY}.png
+    # Assets เก็บ PL!-bp3-001-P แต่เว็บใช้ PL!-bp3-P-001-P
+    if url and "/cardlist/BP03/" in url:
+        m = re.match(r'^(PL!-bp3)-(\d+)-([A-Za-z0-9+]+)$', card_no)
+        if m:
+            prefix, num, rarity = m.group(1), m.group(2), m.group(3)
+            web_cn = f"{prefix}-{rarity}-{num}-{rarity}"
+            url = f"{_CARD_IMAGE_BASE}/BP03/{web_cn}.png"
+
+    return url
 
 
 def load_from_assets_live() -> List[LiveCard]:
