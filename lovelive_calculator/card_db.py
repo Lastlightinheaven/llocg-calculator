@@ -31,6 +31,39 @@ ASSETS_CARD_TEXT_TH = ASSETS_DIR / "CardTextTH.json"
 ASSETS_IMAGES_LIVE = ASSETS_DIR / "Images" / "Live"
 ASSETS_IMAGES_MEMBER = ASSETS_DIR / "Images" / "Member"
 
+_CARD_IMAGE_BASE = "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist"
+
+# Map card_no prefix → folder name on llofficial-cardgame.com/cardlist/
+_CARD_IMAGE_FOLDER_MAP: List[Tuple[str, str]] = [
+    ("PL!HS-sd1",  "HSSD01"),
+    ("PL!HS-",     "PBHS"),
+    ("PL!N-sd1",   "NSD01"),
+    ("PL!N-",      "PBnj"),
+    ("PL!S-sd1",   "SSD01"),
+    ("PL!S-bp2",   "BP02"),
+    ("PL!S-",      "PBLS"),
+    ("PL!SP-sd1",  "SPSD01"),
+    ("PL!SP-",     "PBSP"),
+    ("PL!-sd1",    "PLSD01"),
+    ("PL!-bp4",    "BP04"),
+    ("PL!-bp3",    "BP03"),
+    ("PL!-pb1",    "PBLL"),
+    ("PL!-",       "BP05"),
+    ("LL-bp1",     "BP01"),
+    ("LL-",        "BP05"),
+]
+
+def card_no_to_image_url(card_no: str) -> str:
+    """คืน URL รูปการ์ดจาก llofficial-cardgame.com โดย map จาก card_no prefix."""
+    cn = normalize_card_no(card_no)
+    # PR cards
+    if "-PR-" in cn or cn.endswith("-PR") or "PR" in cn.split("-")[-1]:
+        return f"{_CARD_IMAGE_BASE}/PR/{cn}.png"
+    for prefix, folder in _CARD_IMAGE_FOLDER_MAP:
+        if cn.startswith(prefix):
+            return f"{_CARD_IMAGE_BASE}/{folder}/{cn}.png"
+    return ""
+
 # Normalize card_no ให้ตรงกันทั้ง DB และ decklog:
 #   - full-width plus (＋ U+FF0B) → ASCII +
 #   - space ก่อน + หรือ ＋ (decklog ส่ง "R +" แต่ DB เก็บ "R＋") → ลบ space
@@ -346,10 +379,11 @@ def _parse_assets_bladeheart(bh: str) -> Tuple[Optional[Color], int]:
 
 
 def _assets_image_path(card_type: str, filename: str) -> str:
-    """คืน path สัมพัทธ์จาก lovelive_calculator/ ไปยังรูปการ์ด."""
-    if card_type == "live":
-        return str((ASSETS_IMAGES_LIVE / filename).as_posix())
-    return str((ASSETS_IMAGES_MEMBER / filename).as_posix())
+    """คืน URL รูปการ์ดจาก llofficial-cardgame.com โดยใช้ filename จาก CardSubInfo."""
+    # filename เช่น "PL!HS-pb1-001-R.png" หรือ "PL!HS-pb1-001-R/PL!HS-pb1-001-R.png"
+    bare = Path(filename).name  # เอาแค่ชื่อไฟล์
+    card_no = bare.replace(".png", "").replace(".PNG", "")
+    return card_no_to_image_url(card_no)
 
 
 def load_from_assets_live() -> List[LiveCard]:
@@ -379,8 +413,7 @@ def load_from_assets_live() -> List[LiveCard]:
             continue
         seen.add(card_no_full)
 
-        img_filename = parts[1] if len(parts) > 1 else ""
-        img_path = _assets_image_path("live", img_filename) if img_filename else ""
+        img_path = card_no_to_image_url(card_no_full)
 
         required: Dict[Color, int] = {}
         for field_name, color in _ASSETS_HEART_FIELDS.items():
@@ -432,8 +465,7 @@ def load_from_assets_members() -> List[DeckCard]:
             if not card_no_full:
                 continue
 
-            img_filename = parts[1] if len(parts) > 1 else ""
-            img_path = _assets_image_path(card_type, img_filename) if img_filename else ""
+            img_path = card_no_to_image_url(card_no_full)
 
             _bh = obj.get("BladeHeart", "") or ""
             trigger_color, _sp = _parse_assets_bladeheart(_bh)
