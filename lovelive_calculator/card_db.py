@@ -28,92 +28,53 @@ ASSETS_DIR = Path(__file__).parent / "Assets"
 ASSETS_LIVE_JSON = ASSETS_DIR / "LiveCardTable.json"
 ASSETS_MEMBER_JSON = ASSETS_DIR / "MemberCardTable.json"
 ASSETS_CARD_TEXT_TH = ASSETS_DIR / "CardTextTH.json"
+ASSETS_CARD_LIST_DIR = ASSETS_DIR / "Card List"
 ASSETS_IMAGES_LIVE = ASSETS_DIR / "Images" / "Live"
 ASSETS_IMAGES_MEMBER = ASSETS_DIR / "Images" / "Member"
 
 _CARD_IMAGE_BASE = "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist"
-
-# Map card_no prefix → folder name on llofficial-cardgame.com/cardlist/
-_CARD_IMAGE_FOLDER_MAP: List[Tuple[str, str]] = [
-    ("PL!HS-sd1",  "HSSD01"),
-    ("PL!HS-",     "PBHS"),
-    ("PL!N-sd1",   "NSD01"),
-    ("PL!N-bp1",   "BP01"),
-    ("PL!N-",      "PBnj"),
-    ("PL!S-sd1",   "SSD01"),
-    ("PL!S-bp2",   "BP02"),
-    ("PL!S-",      "PBLS"),
-    ("PL!SP-sd1",  "SPSD01"),
-    ("PL!SP-bp1",  "BP01"),
-    ("PL!SP-bp2",  "BP02"),
-    ("PL!SP-",     "PBSP"),
-    ("PL!-sd1",    "PLSD01"),
-    ("PL!-bp4",    "BP04"),
-    ("PL!-bp3",    "BP03"),
-    ("PL!-pb1",    "PBLL"),
-    ("PL!-",       "BP05"),
-    ("LL-bp1",     "BP01"),
-    ("LL-bp2",     "BP02"),
-    ("LL-",        "BP05"),
-]
-
-# rarity suffix ที่เว็บใช้ชื่อต่างจาก Assets (global remap)
-_RARITY_REMAP = {
-    "R+": "R2",
-    "P+": "P2",
-    "L":  "L2",
-}
-
-# series prefix ที่ Assets ใช้ bp1 แต่เว็บใช้ pb1 (Premium Booster series)
-_BP1_TO_PB1_PREFIXES = ("PL!HS-", "PL!S-", "PL!SP-", "PL!-")
-
-# rarity ที่ไม่มีบนเว็บ — ไม่มี URL ที่ถูกต้อง ให้ return ""
-_RARITY_NOT_ON_WEB = {"N", "AR", "L"}
-
-def card_no_to_image_url(card_no: str) -> str:
-    """คืน URL รูปการ์ดจาก llofficial-cardgame.com โดย map จาก card_no prefix."""
-    cn = normalize_card_no(card_no)
-
-    # ตรวจ rarity suffix ที่ไม่มีบนเว็บ
-    suffix = cn.split("-")[-1]
-    if suffix in _RARITY_NOT_ON_WEB:
-        return ""
-
-    # แปลง rarity suffix ถ้าเว็บใช้ชื่อต่าง
-    for old, new in _RARITY_REMAP.items():
-        if cn.endswith(f"-{old}"):
-            cn = cn[: -len(old)] + new
-            break
-
-    # PR cards — suffix -PR หรือ card_no ที่มี PR ในชื่อโดยตรง (เช่น PL!!PR001, PL!SPPR003)
-    last_part = cn.split("-")[-1]
-    if cn.endswith("-PR") or last_part.startswith("PR") or re.search(r'PR\d', cn):
-        return f"{_CARD_IMAGE_BASE}/PR/{cn}.png"
-
-    # series ที่ใช้ bp1 ใน Assets แต่เว็บต้องการ pb1 → remap ก่อน lookup
-    # ยกเว้น PL!N-bp1 และ PL!SP-bp1 ที่อยู่ใน BP01 โดยไม่ต้อง remap
-    _BP1_KEEP_AS_IS = ("PL!N-bp1", "PL!SP-bp1")
-    cn_lookup = cn
-    if "-bp1-" in cn and not any(cn.startswith(p) for p in _BP1_KEEP_AS_IS):
-        for pfx in _BP1_TO_PB1_PREFIXES:
-            if cn.startswith(pfx):
-                cn_lookup = cn.replace("-bp1-", "-pb1-", 1)
-                # pb1 series ใช้ P2 แทน P
-                if cn_lookup.endswith("-P"):
-                    cn_lookup = cn_lookup + "2"
-                break
-
-    for prefix, folder in _CARD_IMAGE_FOLDER_MAP:
-        if cn_lookup.startswith(prefix):
-            return f"{_CARD_IMAGE_BASE}/{folder}/{cn_lookup}.png"
-
-    return ""
 
 # Normalize card_no ให้ตรงกันทั้ง DB และ decklog:
 #   - full-width plus (＋ U+FF0B) → ASCII +
 #   - space ก่อน + หรือ ＋ (decklog ส่ง "R +" แต่ DB เก็บ "R＋") → ลบ space
 def normalize_card_no(card_no: str) -> str:
     return card_no.replace(" ＋", "＋").replace("＋", "+").replace(" +", "+")
+
+
+# Cache: card_no (normalized) → image URL, loaded from Assets/Card List CSVs
+_card_list_image_map: Optional[Dict[str, str]] = None
+
+
+def _load_card_list_image_map() -> Dict[str, str]:
+    """Build {normalized_card_no: image_url} from all CSVs in Assets/Card List/."""
+    global _card_list_image_map
+    if _card_list_image_map is not None:
+        return _card_list_image_map
+    result: Dict[str, str] = {}
+    if not ASSETS_CARD_LIST_DIR.exists():
+        _card_list_image_map = result
+        return result
+    import csv
+    for csv_path in ASSETS_CARD_LIST_DIR.glob("*.csv"):
+        try:
+            with csv_path.open(encoding="utf-8-sig", newline="") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    card_no = normalize_card_no((row.get("card_no") or "").strip())
+                    image = (row.get("image") or "").strip()
+                    if card_no and image:
+                        result[card_no] = image
+        except Exception:
+            continue
+    _card_list_image_map = result
+    return result
+
+
+def card_no_to_image_url(card_no: str) -> str:
+    """คืน URL รูปการ์ดจาก Assets/Card List CSVs (ข้อมูลจากเว็บ Official โดยตรง)."""
+    cn = normalize_card_no(card_no)
+    img_map = _load_card_list_image_map()
+    return img_map.get(cn, "")
 
 
 def strip_rarity_suffix(card_no: str) -> str:
@@ -424,21 +385,10 @@ def _parse_assets_bladeheart(bh: str) -> Tuple[Optional[Color], int]:
 
 
 def _assets_image_path(card_type: str, filename: str) -> str:
-    """คืน URL รูปการ์ดจาก llofficial-cardgame.com โดยใช้ filename จาก CardSubInfo."""
+    """คืน URL รูปการ์ดจาก Assets/Card List CSVs โดยใช้ filename จาก CardSubInfo."""
     bare = Path(filename).name
     card_no = bare.replace(".png", "").replace(".PNG", "")
-    url = card_no_to_image_url(card_no)
-
-    # BP03 ใช้ format พิเศษ: PL!-bp3-{RARITY}-{NUM}-{RARITY}.png
-    # Assets เก็บ PL!-bp3-001-P แต่เว็บใช้ PL!-bp3-P-001-P
-    if url and "/cardlist/BP03/" in url:
-        m = re.match(r'^(PL!-bp3)-(\d+)-([A-Za-z0-9+]+)$', card_no)
-        if m:
-            prefix, num, rarity = m.group(1), m.group(2), m.group(3)
-            web_cn = f"{prefix}-{rarity}-{num}-{rarity}"
-            url = f"{_CARD_IMAGE_BASE}/BP03/{web_cn}.png"
-
-    return url
+    return card_no_to_image_url(card_no)
 
 
 def load_from_assets_live() -> List[LiveCard]:
