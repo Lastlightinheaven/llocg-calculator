@@ -418,8 +418,7 @@ def load_from_assets_live() -> List[LiveCard]:
             continue
         seen.add(card_no_full)
 
-        img_filename = parts[1] if len(parts) > 1 else ""
-        img_path = _assets_image_path("live", img_filename) if img_filename else card_no_to_image_url(card_no_full)
+        img_path = card_no_to_image_url(card_no_full)
 
         required: Dict[Color, int] = {}
         for field_name, color in _ASSETS_HEART_FIELDS.items():
@@ -471,8 +470,7 @@ def load_from_assets_members() -> List[DeckCard]:
             if not card_no_full:
                 continue
 
-            img_filename = parts[1] if len(parts) > 1 else ""
-            img_path = _assets_image_path(card_type, img_filename) if img_filename else card_no_to_image_url(card_no_full)
+            img_path = card_no_to_image_url(card_no_full)
 
             _bh = obj.get("BladeHeart", "") or ""
             trigger_color, _sp = _parse_assets_bladeheart(_bh)
