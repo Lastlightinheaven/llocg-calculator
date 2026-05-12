@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Assets รูปภาพ (ไฟล์ใหญ่ ไม่จำเป็นต้อง push)
+lovelive_calculator/Assets/Images/
+
+# Claude
+.claude/
+**/CLAUDE.md
+
+# OS
+.DS_Store
+Thumbs.db
