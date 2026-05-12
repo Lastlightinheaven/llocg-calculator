@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import io
 import math
+import urllib.request
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -98,19 +99,36 @@ _thumb_cache: Dict[str, Image.Image] = {}
 _LIVE_THUMB_W = 330  # px (scale=2 included) — วาง 4 ใบพอดีใน grid
 _LIVE_THUMB_H = round(_LIVE_THUMB_W * 350 / 489)
 
+def _fetch_image(src: str | None) -> Image.Image | None:
+    """Load image from URL or local path. Returns None on failure."""
+    if not src:
+        return None
+    try:
+        if src.startswith("http://") or src.startswith("https://"):
+            req = urllib.request.Request(
+                src, headers={"User-Agent": "llocg-deck-export/1.0"}
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                return Image.open(io.BytesIO(resp.read())).convert("RGBA")
+        else:
+            return Image.open(src).convert("RGBA")
+    except Exception:
+        return None
+
+
 def _thumb(path: str | None, is_live: bool = False) -> Image.Image:
     cache_key = (path or "") + ("_live" if is_live else "")
     if cache_key in _thumb_cache:
         return _thumb_cache[cache_key]
     tw = _LIVE_THUMB_W if is_live else _THUMB_W
     th = _LIVE_THUMB_H if is_live else _THUMB_H
-    try:
-        img = Image.open(path).convert("RGBA").resize((tw, th), Image.LANCZOS)
-    except Exception:
+    img = _fetch_image(path)
+    if img is None:
         try:
-            img = Image.open(_CARD_BACK).convert("RGBA").resize((tw, th), Image.LANCZOS)
+            img = Image.open(_CARD_BACK).convert("RGBA")
         except Exception:
             img = Image.new("RGBA", (tw, th), _BG2)
+    img = img.resize((tw, th), Image.LANCZOS)
     _thumb_cache[cache_key] = img
     return img
 
