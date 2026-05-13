@@ -28,9 +28,43 @@ ASSETS_DIR = Path(__file__).parent / "Assets"
 ASSETS_LIVE_JSON = ASSETS_DIR / "LiveCardTable.json"
 ASSETS_MEMBER_JSON = ASSETS_DIR / "MemberCardTable.json"
 ASSETS_CARD_TEXT_TH = ASSETS_DIR / "CardTextTH.json"
+ASSETS_NAME_MAPPING = ASSETS_DIR / "Name mapping.json"
 ASSETS_CARD_LIST_DIR = ASSETS_DIR / "Card List"
 ASSETS_IMAGES_LIVE = ASSETS_DIR / "Images" / "Live"
 ASSETS_IMAGES_MEMBER = ASSETS_DIR / "Images" / "Member"
+
+
+def _load_name_mapping() -> Dict[str, str]:
+    """โหลด {Japanese Name: English Name} จาก Assets/Name mapping.json"""
+    if not ASSETS_NAME_MAPPING.exists():
+        return {}
+    data = json.loads(ASSETS_NAME_MAPPING.read_text(encoding="utf-8"))
+    mapping = {entry["Japanese Name"]: entry["English Name"] for entry in data if "Japanese Name" in entry and "English Name" in entry}
+    # Katakana variant สำหรับการ์ดที่ใช้ spelling ต่างจาก mapping
+    mapping.setdefault("統堂エレナ", "Toudou Erena")
+    return mapping
+
+
+_NAME_MAP: Optional[Dict[str, str]] = None
+
+
+def _translate_name(jp_name: str) -> str:
+    """แปลงชื่อภาษาญี่ปุ่นเป็นภาษาอังกฤษ ถ้าไม่มี mapping คืน original
+    รองรับชื่อ multi-member ที่คั่นด้วย & โดยแปลงทีละส่วน
+    """
+    global _NAME_MAP
+    if _NAME_MAP is None:
+        _NAME_MAP = _load_name_mapping()
+        # index ที่ normalize whitespace เพื่อ match กรณี DB กับ mapping มี space ต่างกัน
+        _NAME_MAP.update({k.replace(" ", "").replace("　", ""): v for k, v in list(_NAME_MAP.items())})
+
+    def _lookup(name: str) -> str:
+        return _NAME_MAP.get(name) or _NAME_MAP.get(name.replace(" ", "").replace("　", ""), name)
+
+    if "&" in jp_name:
+        parts = [_lookup(p.strip()) for p in jp_name.split("&")]
+        return " & ".join(parts)
+    return _lookup(jp_name)
 
 _CARD_IMAGE_BASE = "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist"
 
@@ -484,7 +518,7 @@ def load_from_assets_members() -> List[DeckCard]:
                     base_heart[color] = n
 
             card = DeckCard(
-                name=obj.get("Name", "") or "",
+                name=_translate_name(obj.get("Name", "") or ""),
                 card_no=card_no_full,
                 card_type=card_type,
                 trigger_color=trigger_color,
