@@ -236,6 +236,53 @@ def _get_all_deck_cards() -> list[DeckCard]:
     return cards
 
 
+def _render_decklog_export(entries: list[dict], total_cards: int) -> None:
+    """ส่วน Export ไป Decklog — POST จาก server ตรงไปยัง Decklog API (ไม่ต้องติดตั้งอะไร)."""
+    from decklog_publish import publish_deck_to_decklog, DecklogPublishError
+
+    st.markdown("### 📤 ส่งไป Decklog")
+
+    default_title = st.session_state.get("imported_title", "") or "My Deck"
+    deck_title = st.text_input(
+        "ชื่อ Deck",
+        value=st.session_state.get("_decklog_title_input", default_title),
+        placeholder="ใส่ชื่อ Deck ที่จะแสดงบน Decklog",
+        key="_decklog_title_input",
+    )
+
+    export_disabled = total_cards == 0
+    if st.button(
+        "📤 ส่งไป Decklog",
+        use_container_width=True,
+        disabled=export_disabled,
+        help="สร้าง Deck ใหม่บน Decklog ทันที — ได้ลิงก์กลับมาพร้อมใช้",
+        type="primary",
+    ):
+        title = deck_title.strip() or default_title
+        with st.spinner("กำลังสร้าง Deck บน Decklog..."):
+            try:
+                result = publish_deck_to_decklog(entries, title=title)
+                st.session_state["_decklog_result"] = result
+            except DecklogPublishError as e:
+                st.session_state["_decklog_result"] = str(e)
+
+    result = st.session_state.get("_decklog_result")
+    if result is not None:
+        from decklog_publish import PublishResult
+        if isinstance(result, PublishResult):
+            st.success(f"✅ สร้าง Deck สำเร็จ! Deck Code: **{result.deck_id}**")
+            st.markdown(
+                f'<a href="{result.url}" target="_blank" '
+                f'style="display:inline-block;background:#e91e8c;color:#fff;padding:10px 22px;'
+                f'border-radius:8px;font-weight:700;text-decoration:none;font-size:0.95rem;'
+                f'box-shadow:0 2px 8px rgba(233,30,140,0.4);">'
+                f'🔗 เปิด Deck บน Decklog</a>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.error(f"เกิดข้อผิดพลาด: {result}")
+
+
 # ---------------------------------------------------------------------------
 # Session-state initialisation
 # ---------------------------------------------------------------------------
@@ -855,3 +902,7 @@ with col_deck:
             use_container_width=True,
         )
         st.image(_png, caption="Preview", use_container_width=True)
+
+    # ── Export to Decklog ─────────────────────────────────────
+    st.markdown("---")
+    _render_decklog_export(entries, total_cards)
