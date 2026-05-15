@@ -320,8 +320,8 @@ with col_browser:
         all_cards = _get_all_deck_cards()
 
         # Card type
-        type_options = ["ทั้งหมด", "member", "live", "energy"]
-        type_labels  = {"ทั้งหมด": "ทั้งหมด", "member": "🎭 Member", "live": "🎵 Live", "energy": "🔋 Energy"}
+        type_options = ["ทั้งหมด", "member", "live"]
+        type_labels  = {"ทั้งหมด": "ทั้งหมด", "member": "🎭 Member", "live": "🎵 Live"}
         sel_type = st.selectbox(
             "ประเภทการ์ด",
             options=type_options,

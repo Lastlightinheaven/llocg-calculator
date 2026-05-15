@@ -617,6 +617,7 @@ def _render_deck_gallery_body() -> None:
         items = groups[t]
         if not items:
             continue
+        items.sort(key=lambda x: x[0].cost if x[0].cost else 999)
         total = sum(c for _, c in items)
         st.subheader(f"{label}  —  {total} ใบ ({len(items)} แบบ)")
         for i in range(0, len(items), cols_per_row):
@@ -798,6 +799,9 @@ def _render_game_board() -> None:
         elif card.card_type == "live" and key not in seen_l:
             seen_l.add(key)
             live_nos.append(key)
+
+    # sort member_nos by cost ascending (unknown cost last)
+    member_nos.sort(key=lambda cn: (idx.get(cn) or idx.get(strip_rarity_suffix(cn)) or type("", (), {"cost": 999})()).cost)
 
     member_opts = [""] + member_nos
     live_opts = [""] + live_nos
