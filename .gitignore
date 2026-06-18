@@ -19,3 +19,10 @@ lovelive_calculator/Assets/Images/
 # OS
 .DS_Store
 Thumbs.db
+lovelive_calculator/plans/
+
+# Turn Planner (WIP — not production ready)
+lovelive_calculator/plan_storage.py
+lovelive_calculator/turn_planner.py
+lovelive_calculator/pages/2_Turn_Planner.py
+test_urls.py
