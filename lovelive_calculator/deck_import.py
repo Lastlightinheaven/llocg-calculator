@@ -236,11 +236,14 @@ def compose_deck_from_entries(
     total_counted = 0
 
     # Build Score+ lookup: card_no → score_plus value
+    # เก็บทั้ง full card_no และ base (ตัด rarity) เพราะ decklog อาจส่ง rarity ต่างจาก Assets
+    # (เช่น decklog: PL!SP-sd2-023-SD2 แต่ Assets เก็บ PL!SP-sd2-023-P) — Score+ ไม่ขึ้นกับ rarity
     sp_lookup: Dict[str, int] = {}
     if live_cards:
         for lc in live_cards:
             if lc.score_plus > 0:
                 sp_lookup[lc.card_no] = lc.score_plus
+                sp_lookup.setdefault(strip_rarity_suffix(lc.card_no), lc.score_plus)
 
     score_plus_count = 0
 
@@ -265,8 +268,8 @@ def compose_deck_from_entries(
             )
             non_trigger += e.count
 
-        # นับ Score+ Live cards ใน deck (ไม่ขึ้นกับ trigger_color)
-        if e.card_no in sp_lookup:
+        # นับ Score+ Live cards ใน deck (ไม่ขึ้นกับ trigger_color) — ลอง full ก่อน แล้ว base
+        if e.card_no in sp_lookup or strip_rarity_suffix(e.card_no) in sp_lookup:
             score_plus_count += e.count
 
     composition = DeckComposition(

@@ -7,6 +7,7 @@ import streamlit as st
 import pandas as pd
 import random
 import base64
+import html as _html
 from pathlib import Path
 
 from models import (
@@ -470,33 +471,47 @@ def _empty_counts() -> dict:
     return counts
 
 
+def _build_live_sp_lut() -> dict:
+    """สร้าง lookup card_no → LiveCard พร้อม base alias (ตัด rarity) — Score+ ไม่ขึ้นกับ rarity
+    (decklog อาจส่ง rarity ต่างจาก Assets เช่น -SD2 vs -P)."""
+    lut = {}
+    for c in st.session_state.get("live_cards", []):
+        lut[c.card_no] = c
+        lut.setdefault(strip_rarity_suffix(c.card_no), c)
+    return lut
+
+
+def _lookup_live(lut: dict, card_no: str):
+    if not card_no:
+        return None
+    return lut.get(card_no) or lut.get(strip_rarity_suffix(card_no))
+
+
 def _calc_deck_score_plus_count() -> int:
     """นับ Score+ Live card ทั้งหมดใน deck จาก imported_entries + live_cards DB."""
     entries = st.session_state.get("imported_entries") or []
     if not entries:
         return 0
-    live_lut = {c.card_no: c for c in st.session_state.get("live_cards", [])}
+    lut = _build_live_sp_lut()
     return sum(
         e.count for e in entries
-        if (lc := live_lut.get(e.card_no)) and lc.score_plus > 0
+        if (lc := _lookup_live(lut, e.card_no)) and lc.score_plus > 0
     )
 
 
 def _score_plus_used() -> int:
     """นับ Score+ Live card ที่ออกจาก deck ไปแล้ว (บน Board + Live สำเร็จ)."""
-    live_lut = {c.card_no: c for c in st.session_state.get("live_cards", [])}
+    lut = _build_live_sp_lut()
     used = 0
     # Live cards บน Game Board (live_slot_*)
     for i in range(3):
-        cn = st.session_state.get(f"live_slot_{i}", "")
-        lc = live_lut.get(cn) if cn else None
+        lc = _lookup_live(lut, st.session_state.get(f"live_slot_{i}", ""))
         if lc and lc.score_plus > 0:
             used += 1
     # Live cards ที่เล่นสำเร็จแล้ว (wr_done_live_*)
     n_done = st.session_state.get("wr_done_live_count", 0)
     for i in range(n_done):
-        cn = st.session_state.get(f"wr_done_live_{i}", "")
-        lc = live_lut.get(cn) if cn else None
+        lc = _lookup_live(lut, st.session_state.get(f"wr_done_live_{i}", ""))
         if lc and lc.score_plus > 0:
             used += 1
     return used
@@ -662,13 +677,29 @@ def _card_slot_placeholder(label: str, bg: str = _SLOT_BG, height: int = 140) ->
 
 
 
-def _build_lives_from_slots() -> list:
-    """Build LiveRequirement list from 3 live slot selections (skip empty)."""
-    live_lut = {c.card_no: c for c in st.session_state.get("live_cards", [])}
+def build_stage_and_lives(stage_card_nos: list, live_card_nos: list) -> tuple:
+    """
+    สร้าง (StageMembers, list[LiveRequirement]) จากรายการ card_no ของ stage + live.
+
+    อ่าน card_index / live_cards จาก session_state แต่รับ slot values เป็น argument
+    จึง reuse ได้ทั้งบอร์ดหลักและ scenario เปรียบเทียบ (ไม่ผูกกับ widget keys).
+    """
     idx = st.session_state.get("card_index", {})
+    live_lut = {c.card_no: c for c in st.session_state.get("live_cards", [])}
+
+    hearts = {c: 0 for c in HEART_COLORS}
+    total_blade = 0
+    for card_no in stage_card_nos:
+        card = idx.get(card_no) if card_no else None
+        if card:
+            for c, n in card.base_heart.items():
+                if c in hearts:
+                    hearts[c] += n
+            total_blade += card.blade
+    stage = StageMembers(basic_hearts=dict(hearts), blade_count=total_blade)
+
     lives = []
-    for i in range(3):
-        card_no = st.session_state.get(f"live_slot_{i}", "")
+    for card_no in live_card_nos:
         if not card_no:
             continue
         lc = live_lut.get(card_no)
@@ -676,7 +707,32 @@ def _build_lives_from_slots() -> list:
         name = (lc.name if lc else (dc.name if dc else card_no)) or card_no
         req = dict(lc.required_hearts) if lc else {}
         lives.append(LiveRequirement(name=name, required_hearts=req))
+    return stage, lives
+
+
+def _build_lives_from_slots() -> list:
+    """Build LiveRequirement list from 3 live slot selections (skip empty)."""
+    live_nos = [st.session_state.get(f"live_slot_{i}", "") for i in range(3)]
+    _stage, lives = build_stage_and_lives([], live_nos)
     return lives
+
+
+def _stage_overrides_aggregate() -> tuple:
+    """รวม Blade + Basic Hearts จากค่าที่ปรับราย slot (stg_ov_*); fallback = stat การ์ดจาก DB."""
+    idx = st.session_state.get("card_index", {})
+    hearts = {c: 0 for c in HEART_COLORS}
+    total_blade = 0
+    for i in range(3):
+        cn = st.session_state.get(f"stage_slot_{i}", "")
+        if not cn:
+            continue
+        card = idx.get(cn)
+        _bl = st.session_state.get(f"stg_ov_{i}_blade")
+        total_blade += int(_bl if _bl is not None else ((card.blade if card else 0) or 0))
+        for c in HEART_COLORS:
+            _hv = st.session_state.get(f"stg_ov_{i}_{c.value}")
+            hearts[c] += int(_hv if _hv is not None else ((card.base_heart.get(c, 0) if card else 0) or 0))
+    return total_blade, hearts
 
 
 def _apply_board_to_inputs() -> None:
@@ -684,41 +740,275 @@ def _apply_board_to_inputs() -> None:
     idx = st.session_state.get("card_index", {})
     live_lut = {c.card_no: c for c in st.session_state.get("live_cards", [])}
 
-    # Stage: รวม blade + base_heart จาก 3 slots
-    hearts: dict = {c: 0 for c in [Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.PURPLE, Color.PINK]}
-    total_blade = 0
-    for i in range(3):
-        card_no = st.session_state.get(f"stage_slot_{i}", "")
-        card = idx.get(card_no) if card_no else None
-        if card:
-            for c, n in card.base_heart.items():
-                if c in hearts:
-                    hearts[c] += n
-            total_blade += card.blade
-    st.session_state["ov_blade"] = total_blade
-    st.session_state["ov_sb_red"] = hearts[Color.RED]
-    st.session_state["ov_sb_blue"] = hearts[Color.BLUE]
-    st.session_state["ov_sb_green"] = hearts[Color.GREEN]
-    st.session_state["ov_sb_yellow"] = hearts[Color.YELLOW]
-    st.session_state["ov_sb_purple"] = hearts[Color.PURPLE]
-    st.session_state["ov_sb_pink"] = hearts[Color.PINK]
+    # Stage: รวม Blade + Basic Hearts จากค่าที่ปรับราย slot (stg_ov_*)
+    _tot_blade, _tot_hearts = _stage_overrides_aggregate()
+    st.session_state["ov_blade"] = _tot_blade
+    st.session_state["ov_sb_red"] = _tot_hearts[Color.RED]
+    st.session_state["ov_sb_blue"] = _tot_hearts[Color.BLUE]
+    st.session_state["ov_sb_green"] = _tot_hearts[Color.GREEN]
+    st.session_state["ov_sb_yellow"] = _tot_hearts[Color.YELLOW]
+    st.session_state["ov_sb_purple"] = _tot_hearts[Color.PURPLE]
+    st.session_state["ov_sb_pink"] = _tot_hearts[Color.PINK]
 
-    # Live: collect slots ที่มีการ์ด (pack ตามลำดับ → form index 0,1,2)
-    filled_slots = [
-        st.session_state.get(f"live_slot_{i}", "")
-        for i in range(3)
-        if st.session_state.get(f"live_slot_{i}", "")
-    ]
-    for form_i, card_no in enumerate(filled_slots):
+    # Live: pack slots ที่มีการ์ด (form 0,1,2) — ใช้ required ที่ปรับราย slot (stg_lv_*) ถ้ามี
+    live_nos_all = [st.session_state.get(f"live_slot_{i}", "") for i in range(3)]
+    _filled = [(i, cn) for i, cn in enumerate(live_nos_all) if cn]
+    for form_i, (slot_i, card_no) in enumerate(_filled):
         lc = live_lut.get(card_no)
         dc = idx.get(card_no)
         name = (lc.name if lc else (dc.name if dc else card_no)) or card_no
         st.session_state[f"live_name_gb_{form_i}"] = name
         for color in [Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.PURPLE, Color.PINK, Color.GRAY]:
-            st.session_state[f"live_gb_{form_i}_{color.value}"] = (
-                lc.required_hearts.get(color, 0) if lc else 0
+            _ov = st.session_state.get(f"stg_lv_{slot_i}_{color.value}")
+            st.session_state[f"live_gb_{form_i}_{color.value}"] = int(
+                _ov if _ov is not None else (lc.required_hearts.get(color, 0) if lc else 0)
             )
-    st.session_state["n_lives_gb"] = max(1, min(3, len(filled_slots)))
+    st.session_state["n_lives_gb"] = max(1, min(3, len(_filled)))
+
+
+def _keep_open(flag_key: str) -> None:
+    """คง expander ให้เปิดค้างระหว่างแก้ค่า (on_change ของ input) — กันยุบตอน rerun."""
+    st.session_state[flag_key] = True
+
+
+def _render_board_stat_editor() -> None:
+    """ปรับ Stat การ์ดก่อนยืนยันบอร์ด: Member (Blade + Basic Hearts) และ Live (Required Hearts).
+
+    รวมไว้ใน expander เดียว ปิดเป็น default เพื่อไม่ให้ยาวเกินไป; กันยุบตอนแก้ด้วย session flag.
+    """
+    idx = st.session_state.get("card_index", {})
+    live_lut = {c.card_no: c for c in st.session_state.get("live_cards", [])}
+    mem_occ = [(i, st.session_state.get(f"stage_slot_{i}", "")) for i in range(3)]
+    mem_occ = [(i, cn) for i, cn in mem_occ if cn]
+    live_occ = [(i, st.session_state.get(f"live_slot_{i}", "")) for i in range(3)]
+    live_occ = [(i, cn) for i, cn in live_occ if cn]
+    if not mem_occ and not live_occ:
+        return
+
+    _pos_lbl = ["Left", "Center", "Right"]
+    with st.expander("✏️ ปรับ Stat การ์ด (Blade / Hearts / Required) — ก่อนยืนยัน",
+                     expanded=st.session_state.get("board_stat_open", False)):
+        st.caption(
+            "ค่าเริ่มต้นมาจากการ์ด — ถ้ามี effect เปลี่ยน Stat ปรับตรงนี้ได้ (ดู Text ประกอบ) "
+            "แล้วกด ✅ ยืนยัน Game Board"
+        )
+
+        # ── Members: Blade + Basic Hearts ────────────────────────────────
+        for i, cn in mem_occ:
+            card = idx.get(cn)
+            if not card:
+                continue
+            if st.session_state.get(f"stg_ov_for_{i}") != cn:
+                st.session_state[f"stg_ov_for_{i}"] = cn
+                st.session_state[f"stg_ov_{i}_blade"] = int(card.blade or 0)
+                for c in HEART_COLORS:
+                    st.session_state[f"stg_ov_{i}_{c.value}"] = int(card.base_heart.get(c, 0) or 0)
+            _pos = _pos_lbl[i] if i < 3 else f"#{i+1}"
+            st.markdown(f"🎭 **{card.name}**  ·  📍{_pos}  ·  ⚡ฐาน {card.blade}  ·  💎{card.cost}")
+            if getattr(card, "text_th", ""):
+                st.caption(card.text_th)
+            _ec = st.columns(7)
+            with _ec[0]:
+                st.number_input("⚡ Blade", min_value=0, max_value=60,
+                                key=f"stg_ov_{i}_blade",
+                                on_change=_keep_open, args=("board_stat_open",))
+            for _j, c in enumerate(HEART_COLORS):
+                with _ec[_j + 1]:
+                    st.number_input(color_label(c), min_value=0, max_value=30,
+                                    key=f"stg_ov_{i}_{c.value}",
+                                    on_change=_keep_open, args=("board_stat_open",))
+
+        # ── Lives: Required Hearts ───────────────────────────────────────
+        for i, cn in live_occ:
+            lc = live_lut.get(cn)
+            dc = idx.get(cn)
+            _name = (lc.name if lc else (dc.name if dc else cn)) or cn
+            if st.session_state.get(f"stg_lv_for_{i}") != cn:
+                st.session_state[f"stg_lv_for_{i}"] = cn
+                _req = lc.required_hearts if lc else {}
+                for c in HEART_COLORS + [Color.GRAY]:
+                    st.session_state[f"stg_lv_{i}_{c.value}"] = int(_req.get(c, 0) or 0)
+            st.markdown(f"🎵 **{_name}**  ·  Required Hearts")
+            if dc is not None and getattr(dc, "text_th", ""):
+                st.caption(dc.text_th)
+            _lc7 = st.columns(7)
+            for _k, c in enumerate(HEART_COLORS + [Color.GRAY]):
+                with _lc7[_k]:
+                    st.number_input(color_label(c), min_value=0, max_value=20,
+                                    key=f"stg_lv_{i}_{c.value}",
+                                    on_change=_keep_open, args=("board_stat_open",))
+
+
+# ── Compare boards (scenarios) helpers ─────────────────────────────────────
+def _scenario_labels(stage_nos: list, live_nos: list) -> tuple:
+    """คืน (live_label, members_label) อ่านง่ายจาก card_no lists."""
+    idx = st.session_state.get("card_index", {})
+    live_lut = {c.card_no: c for c in st.session_state.get("live_cards", [])}
+
+    def _nm(cn: str) -> str:
+        if not cn:
+            return ""
+        lc = live_lut.get(cn)
+        dc = idx.get(cn)
+        return (lc.name if lc else (dc.name if dc else cn)) or cn
+
+    live_names = [_nm(cn) for cn in live_nos if cn]
+    member_names = [_nm(cn) for cn in stage_nos if cn]
+    return (", ".join(live_names) or "—", ", ".join(member_names) or "—")
+
+
+def _current_board_blade_hearts() -> tuple:
+    """อ่าน Blade + Basic Hearts ที่ resolved บนบอร์ดปัจจุบัน (รวมค่าที่ User ปรับมือใน ov_*)."""
+    blade = int(st.session_state.get("ov_blade", 0) or 0)
+    hearts = {c.value: int(st.session_state.get(f"ov_sb_{c.value}", 0) or 0) for c in HEART_COLORS}
+    return blade, hearts
+
+
+def _current_board_lives() -> list:
+    """อ่าน Live + required hearts ที่ resolved บนบอร์ดปัจจุบัน (รวมที่ปรับมือใน live_gb_*)."""
+    n = int(st.session_state.get("n_lives_gb", 1) or 1)
+    lives = []
+    for i in range(n):
+        name = st.session_state.get(f"live_name_gb_{i}", "") or f"Live {i + 1}"
+        req = {}
+        for c in HEART_COLORS + [Color.GRAY]:
+            v = int(st.session_state.get(f"live_gb_{i}_{c.value}", 0) or 0)
+            if v > 0:
+                req[c.value] = v
+        lives.append({"name": name, "req": req})
+    return lives
+
+
+def _add_current_board_to_compare() -> None:
+    """Snapshot บอร์ดปัจจุบัน — เก็บการ์ด + Blade/Hearts + Live required ที่ปรับมือไว้แล้ว."""
+    stage_nos = [st.session_state.get(f"stage_slot_{i}", "") for i in range(3)]
+    live_nos = [st.session_state.get(f"live_slot_{i}", "") for i in range(3)]
+    if not any(stage_nos) and not any(live_nos):
+        st.session_state["_compare_msg"] = ("warning", "บอร์ดว่าง — เลือก Live/Member ก่อนเพิ่ม")
+        return
+    blade, hearts = _current_board_blade_hearts()
+    scenarios = st.session_state.setdefault("compare_scenarios", [])
+    next_id = st.session_state.get("compare_next_id", 1)
+    scenarios.append({
+        "id": next_id,
+        "label": f"บอร์ด {next_id}",
+        "stage": stage_nos,
+        "live": live_nos,
+        "blade": blade,
+        "hearts": hearts,
+        "lives": _current_board_lives(),
+    })
+    st.session_state["compare_next_id"] = next_id + 1
+    st.session_state["compare_results"] = None  # invalidate cache
+
+
+def _remove_scenario(sid: int) -> None:
+    st.session_state["compare_scenarios"] = [
+        s for s in st.session_state.get("compare_scenarios", []) if s["id"] != sid
+    ]
+    st.session_state["compare_results"] = None
+
+
+def _duplicate_scenario(sid: int) -> None:
+    scenarios = st.session_state.get("compare_scenarios", [])
+    for s in scenarios:
+        if s["id"] == sid:
+            next_id = st.session_state.get("compare_next_id", 1)
+            scenarios.append({
+                "id": next_id,
+                "label": f"{s['label']} (copy)",
+                "stage": list(s["stage"]),
+                "live": list(s["live"]),
+                "blade": s.get("blade", 0),
+                "hearts": dict(s.get("hearts", {})),
+                "lives": [{"name": l["name"], "req": dict(l["req"])} for l in s.get("lives", [])],
+            })
+            st.session_state["compare_next_id"] = next_id + 1
+            st.session_state["compare_results"] = None
+            break
+
+
+def _sync_scenario(sid: int) -> None:
+    """แก้ Blade/Hearts/Live-required ของ scenario แบบ inline จาก widget keys."""
+    for s in st.session_state.get("compare_scenarios", []):
+        if s["id"] != sid:
+            continue
+        s["blade"] = int(st.session_state.get(f"cmp_blade_{sid}", s.get("blade", 0)) or 0)
+        s["hearts"] = {
+            c.value: int(st.session_state.get(f"cmp_h_{sid}_{c.value}", 0) or 0)
+            for c in HEART_COLORS
+        }
+        for li, lv in enumerate(s.get("lives", [])):
+            lv["req"] = {
+                c.value: int(st.session_state.get(f"cmp_lr_{sid}_{li}_{c.value}", 0) or 0)
+                for c in HEART_COLORS + [Color.GRAY]
+                if int(st.session_state.get(f"cmp_lr_{sid}_{li}_{c.value}", 0) or 0) > 0
+            }
+        st.session_state["compare_results"] = None
+        break
+
+
+def _rename_scenario(sid: int) -> None:
+    new = (st.session_state.get(f"cmp_label_{sid}", "") or "").strip()
+    if not new:
+        return
+    for s in st.session_state.get("compare_scenarios", []):
+        if s["id"] == sid:
+            s["label"] = new
+            break
+
+
+def _clear_scenarios() -> None:
+    st.session_state["compare_scenarios"] = []
+    st.session_state["compare_results"] = None
+
+
+def _load_scenario_to_board(sid: int) -> None:
+    """โหลด scenario กลับเข้า Game Board (callback — รันก่อน rerun จึงตั้งค่า widget keys ได้).
+
+    คืน Blade/Hearts ที่ปรับมือไว้ (ไม่ recompute จากการ์ดทับ) ส่วน required ของ Live
+    มาจากการ์ดตามปกติ.
+    """
+    idx = st.session_state.get("card_index", {})
+    live_lut = {c.card_no: c for c in st.session_state.get("live_cards", [])}
+    for s in st.session_state.get("compare_scenarios", []):
+        if s["id"] != sid:
+            continue
+        stage_nos, live_nos = s["stage"], s["live"]
+        for i in range(3):
+            st.session_state[f"stage_slot_{i}"] = stage_nos[i] if i < len(stage_nos) else ""
+            st.session_state[f"live_slot_{i}"] = live_nos[i] if i < len(live_nos) else ""
+        # คืนค่า Blade/Hearts ที่ปรับมือ (fallback: คำนวณจากการ์ดถ้า scenario เก่าไม่มี)
+        if "hearts" in s:
+            st.session_state["ov_blade"] = int(s.get("blade", 0))
+            for c in HEART_COLORS:
+                st.session_state[f"ov_sb_{c.value}"] = int(s["hearts"].get(c.value, 0))
+        else:
+            _bstage, _ = build_stage_and_lives(stage_nos, live_nos)
+            st.session_state["ov_blade"] = _bstage.blade_count
+            for c in HEART_COLORS:
+                st.session_state[f"ov_sb_{c.value}"] = _bstage.basic_hearts.get(c, 0)
+        # Live requirements: คืนจาก lives ที่เก็บ (รวมที่ปรับมือ); fallback จากการ์ด
+        if s.get("lives"):
+            for form_i, lv in enumerate(s["lives"][:3]):
+                st.session_state[f"live_name_gb_{form_i}"] = lv.get("name", "") or f"Live {form_i + 1}"
+                for color in HEART_COLORS + [Color.GRAY]:
+                    st.session_state[f"live_gb_{form_i}_{color.value}"] = int(lv.get("req", {}).get(color.value, 0))
+            st.session_state["n_lives_gb"] = max(1, min(3, len(s["lives"])))
+        else:
+            filled = [cn for cn in live_nos if cn]
+            for form_i, cn in enumerate(filled):
+                lc = live_lut.get(cn)
+                dc = idx.get(cn)
+                st.session_state[f"live_name_gb_{form_i}"] = (lc.name if lc else (dc.name if dc else cn)) or cn
+                for color in HEART_COLORS + [Color.GRAY]:
+                    st.session_state[f"live_gb_{form_i}_{color.value}"] = (
+                        lc.required_hearts.get(color, 0) if lc else 0
+                    )
+            st.session_state["n_lives_gb"] = max(1, min(3, len(filled)))
+        st.session_state["active_live_picker"] = None
+        st.session_state["active_stage_picker"] = None
+        break
 
 
 def _render_card_picker_grid(card_nos: list, slot_key: str, cols: int = 4, card_w: int = 260) -> None:
@@ -1306,10 +1596,13 @@ if _has_deck:
     _render_game_board()
     _lives_from_board = _build_lives_from_slots()
 
+    _render_board_stat_editor()
+
     if st.button("✅ ยืนยัน Game Board → อัปเดต Stage & Live", type="primary", use_container_width=True):
         _apply_board_to_inputs()
         st.session_state["active_live_picker"] = None
         st.session_state["active_stage_picker"] = None
+        st.session_state["board_stat_open"] = False  # ยุบ dropdown ปรับ stat หลังยืนยัน
         st.rerun()
 
     st.divider()
@@ -1453,14 +1746,16 @@ if _has_deck:
             if _dl_key not in st.session_state:
                 st.session_state[_dl_key] = ""
             _dl_sel = st.session_state.get(_dl_key, "")
-            _dl_card = _idx_wr.get(_dl_sel) if _dl_sel else None
+            _dl_card = _idx_lookup(_dl_sel) if _dl_sel else None
             _dl_label = f"Live สำเร็จ #{_di + 1}"
             _dl_c1, _dl_c2 = st.columns([3, 1])
             with _dl_c1:
                 st.selectbox(
                     _dl_label,
                     options=_live_opts_wr,
-                    format_func=lambda cn: (_idx_wr[cn].name if cn and _idx_wr.get(cn) else ("— เลือกการ์ด —" if not cn else cn)),
+                    format_func=lambda cn: (
+                        (_c.name if (_c := _idx_lookup(cn)) else cn) if cn else "— เลือกการ์ด —"
+                    ),
                     key=_dl_key,
                 )
                 if _dl_card:
@@ -2172,6 +2467,333 @@ if calc_btn:
             if remaining.non_trigger > 0:
                 rows.append({"ประเภท": "⬛ Non-Trigger", "จำนวน": remaining.non_trigger})
             st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+
+
+# ==========================================================================
+# COMPARE BOARDS (scenarios)
+# ==========================================================================
+if _has_deck:
+    st.divider()
+    with st.expander(
+        "📊 เปรียบเทียบบอร์ด (Compare boards)",
+        expanded=bool(st.session_state.get("compare_scenarios")),
+    ):
+        st.caption(
+            "เก็บสแนปช็อตบอร์ด (Live + Members) หลายแบบ แล้วเทียบโอกาสสำเร็จบน "
+            "Situation เดียวกัน (Waiting Room + Deck ปัจจุบัน) — แต่ละบอร์ดปรับ "
+            "Blade / Basic Hearts / Required ของ Live ที่เปลี่ยนจาก effect ได้ในช่อง "
+            "ด้านล่างชื่อบอร์ด (ค่าเริ่มต้นดึงจากบอร์ดตอนกด ➕ รวมที่ปรับมือไว้แล้ว)"
+        )
+
+        _c_add, _c_mc, _c_to = st.columns([2, 1, 1])
+        with _c_add:
+            st.button(
+                "➕ เพิ่มบอร์ดปัจจุบันเข้าตาราง",
+                on_click=_add_current_board_to_compare,
+                use_container_width=True,
+                type="primary",
+            )
+        with _c_mc:
+            cmp_mc_trials = st.select_slider(
+                "Monte Carlo trials (ต่อบอร์ด)",
+                options=[1_000, 5_000, 10_000, 20_000, 50_000],
+                value=10_000,
+                key="cmp_mc_trials",
+            )
+        with _c_to:
+            _cmp_to_max = max(1, deck.total() - 1)
+            cmp_total_out = st.number_input(
+                "การ์ดออกจาก Deck รวม",
+                min_value=0, max_value=_cmp_to_max,
+                value=min(int(waiting.total()), _cmp_to_max),
+                step=1, key="cmp_total_out",
+                help="ใช้เป็นแกน X ของกราฟเส้น Non-Trigger (เท่ากันทุกบอร์ด)",
+            )
+
+        _msg = st.session_state.pop("_compare_msg", None)
+        if _msg:
+            getattr(st, _msg[0])(_msg[1])
+
+        _scenarios = st.session_state.get("compare_scenarios", [])
+        if not _scenarios:
+            st.info("ยังไม่มีบอร์ดในตาราง — จัดบอร์ดด้านบนแล้วกด ➕ เพื่อเพิ่ม")
+        else:
+            for _s in _scenarios:
+                # backfill สำหรับ scenario เก่าที่ยังไม่มี blade/hearts/lives (คำนวณจากการ์ด)
+                if "hearts" not in _s or "lives" not in _s:
+                    _bstage, _blives = build_stage_and_lives(_s["stage"], _s["live"])
+                    _s.setdefault("blade", _bstage.blade_count)
+                    _s.setdefault("hearts", {c.value: _bstage.basic_hearts.get(c, 0) for c in HEART_COLORS})
+                    _s.setdefault("lives", [
+                        {"name": lv.name, "req": {k.value: v for k, v in lv.required_hearts.items()}}
+                        for lv in _blives
+                    ])
+
+                _mem_lbl = _scenario_labels(_s["stage"], _s["live"])[1]
+                _live_lbl = ", ".join(lv.get("name", "") for lv in _s.get("lives", [])) or "—"
+                _r1, _r2, _r3, _r4, _r5 = st.columns([3, 6, 1, 1, 1])
+                with _r1:
+                    st.text_input(
+                        "ชื่อบอร์ด",
+                        value=_s["label"],
+                        key=f"cmp_label_{_s['id']}",
+                        label_visibility="collapsed",
+                        on_change=_rename_scenario,
+                        args=(_s["id"],),
+                    )
+                with _r2:
+                    st.caption(f"🎵 {_live_lbl}  ·  🎭 {_mem_lbl}")
+                with _r3:
+                    st.button("↩️", key=f"cmp_load_{_s['id']}", help="โหลดกลับเข้าบอร์ด",
+                              on_click=_load_scenario_to_board, args=(_s["id"],))
+                with _r4:
+                    st.button("🗐", key=f"cmp_dup_{_s['id']}", help="ทำซ้ำ",
+                              on_click=_duplicate_scenario, args=(_s["id"],))
+                with _r5:
+                    st.button("🗑️", key=f"cmp_del_{_s['id']}", help="ลบ",
+                              on_click=_remove_scenario, args=(_s["id"],))
+
+                # ── Inline editor (ซ่อน/แสดงด้วย dropdown) ─────────────────────
+                with st.expander(f"✏️ ปรับ Blade / Hearts / Required — {_s['label']}", expanded=False):
+                    st.caption("🎭 Stage — Blade + Basic Hearts")
+                    _ec = st.columns(7)
+                    with _ec[0]:
+                        st.number_input(
+                            "⚡ Blade", min_value=0, max_value=60,
+                            value=int(_s.get("blade", 0)),
+                            key=f"cmp_blade_{_s['id']}",
+                            on_change=_sync_scenario, args=(_s["id"],),
+                        )
+                    for _j, _c in enumerate(HEART_COLORS):
+                        with _ec[_j + 1]:
+                            st.number_input(
+                                color_label(_c), min_value=0, max_value=30,
+                                value=int(_s.get("hearts", {}).get(_c.value, 0)),
+                                key=f"cmp_h_{_s['id']}_{_c.value}",
+                                on_change=_sync_scenario, args=(_s["id"],),
+                            )
+
+                    for _li, _lv in enumerate(_s.get("lives", [])):
+                        st.caption(f"🎵 Required — {_lv.get('name') or f'Live {_li + 1}'}")
+                        _lrc = st.columns(7)
+                        for _k, _c in enumerate(HEART_COLORS + [Color.GRAY]):
+                            with _lrc[_k]:
+                                st.number_input(
+                                    color_label(_c), min_value=0, max_value=20,
+                                    value=int(_lv.get("req", {}).get(_c.value, 0)),
+                                    key=f"cmp_lr_{_s['id']}_{_li}_{_c.value}",
+                                    on_change=_sync_scenario, args=(_s["id"],),
+                                )
+                st.divider()
+
+            _cc1, _cc2 = st.columns([2, 2])
+            with _cc1:
+                _do_cmp_calc = st.button("🔄 คำนวณตารางเทียบ", type="primary", use_container_width=True)
+            with _cc2:
+                st.button("🧹 ล้างทั้งหมด", on_click=_clear_scenarios, use_container_width=True)
+
+            if _do_cmp_calc:
+                _cmp_rows = []
+                _cmp_skipped = 0
+                _idx = st.session_state.get("card_index", {})
+                _live_lut = {c.card_no: c for c in st.session_state.get("live_cards", [])}
+                with st.spinner(
+                    f"คำนวณ {len(_scenarios)} บอร์ด × Non-Trigger sensitivity × MC {cmp_mc_trials:,} trials..."
+                ):
+                    for _s in _scenarios:
+                        # Lives จากค่าที่เก็บ (รวม required ที่ปรับมือ/inline); fallback จากการ์ด
+                        if _s.get("lives"):
+                            _sc_lives = [
+                                LiveRequirement(
+                                    name=lv.get("name") or "Live",
+                                    required_hearts={Color(k): int(v) for k, v in lv.get("req", {}).items()},
+                                )
+                                for lv in _s["lives"]
+                            ]
+                        else:
+                            _, _sc_lives = build_stage_and_lives(_s["stage"], _s["live"])
+                        # ข้ามถ้าไม่มี required hearts รวมเลย
+                        if sum(sum(l.required_hearts.values()) for l in _sc_lives) == 0:
+                            _cmp_skipped += 1
+                            continue
+                        # Stage hearts/blade จากค่าที่เก็บ (รวมที่ปรับ inline จาก effect)
+                        if "hearts" in _s:
+                            _sc_stage = StageMembers(
+                                basic_hearts={c: int(_s["hearts"].get(c.value, 0)) for c in HEART_COLORS},
+                                blade_count=int(_s.get("blade", 0)),
+                            )
+                        else:
+                            _sc_stage, _ = build_stage_and_lives(_s["stage"], _s["live"])
+                        _sc_state = GameState(
+                            deck=deck, waiting_room=waiting, stage=_sc_stage,
+                            lives=_sc_lives, reshuffle_pool=_reshuffle_pool,
+                        )
+                        # Non-Trigger sensitivity curve (แกน X = Non-Trigger คงเหลือใน Deck)
+                        _curve = compute_non_trigger_sensitivity(
+                            _sc_state, total_out=int(cmp_total_out),
+                            mc_trials=cmp_mc_trials, mc_seed=42,
+                        )
+                        _cur = next((r for r in _curve if r["is_current"]), (_curve[0] if _curve else None))
+                        _exact = _cur["exact_pct"] if _cur else 0.0
+                        _mc = _cur["mc_pct"] if _cur else 0.0
+                        _m = _scenario_labels(_s["stage"], _s["live"])[1]
+                        _l = ", ".join(lv.name for lv in _sc_lives) or "—"
+                        # required รวมทุก Live (เห็นชัดเวลา effect ปรับ requirement)
+                        _req_combined = {}
+                        for lv in _sc_lives:
+                            for c, n in lv.required_hearts.items():
+                                _req_combined[c] = _req_combined.get(c, 0) + n
+                        # รายละเอียดการ์ด: Cost ของ member + รูปสำหรับ hover
+                        _members_detail = []
+                        _cost_total = 0
+                        for _cn in _s["stage"]:
+                            _mcard = _idx.get(_cn) if _cn else None
+                            if _mcard:
+                                _mcost = int(getattr(_mcard, "cost", 0) or 0)
+                                _members_detail.append({
+                                    "name": _mcard.name or _cn,
+                                    "card_no": _cn,
+                                    "cost": _mcost,
+                                    "blade": int(getattr(_mcard, "blade", 0) or 0),
+                                    "img": _card_img_src(getattr(_mcard, "image", "") or ""),
+                                })
+                                _cost_total += _mcost
+                        _lives_detail = []
+                        for _i2, _cn in enumerate([cn for cn in _s["live"] if cn]):
+                            _lcard = _live_lut.get(_cn) or _idx.get(_cn)
+                            _lives_detail.append({
+                                "name": (_sc_lives[_i2].name if _i2 < len(_sc_lives) else None)
+                                        or (_lcard.name if _lcard else _cn),
+                                "card_no": _cn,
+                                "cost": 0,
+                                "blade": 0,
+                                "img": _card_img_src(getattr(_lcard, "image", "") or "") if _lcard else "",
+                            })
+                        if not _lives_detail:
+                            _lives_detail = [{"name": lv.name, "card_no": "", "cost": 0, "blade": 0, "img": ""} for lv in _sc_lives]
+                        _cmp_rows.append({
+                            "label": _s["label"],
+                            "live": _l,
+                            "members": _m,
+                            "members_detail": _members_detail,
+                            "lives_detail": _lives_detail,
+                            "cost_total": _cost_total,
+                            "blade": _sc_stage.blade_count,
+                            "hearts_total": sum(_sc_stage.basic_hearts.values()),
+                            "board_total": _sc_stage.blade_count + sum(_sc_stage.basic_hearts.values()),
+                            "hearts": " ".join(
+                                f"{COLOR_EMOJI.get(c, c.value)}{_sc_stage.basic_hearts.get(c, 0)}"
+                                for c in HEART_COLORS if _sc_stage.basic_hearts.get(c, 0) > 0
+                            ) or "—",
+                            "req": " ".join(
+                                f"{COLOR_EMOJI.get(c, c.value)}{_req_combined.get(c, 0)}"
+                                for c in HEART_COLORS + [Color.GRAY] if _req_combined.get(c, 0) > 0
+                            ) or "—",
+                            "exact": _exact,
+                            "mc": _mc,
+                            "curve": [
+                                {"non": r["non_remaining"], "exact": r["exact_pct"], "mc": r["mc_pct"]}
+                                for r in _curve
+                            ],
+                        })
+                st.session_state["compare_results"] = _cmp_rows
+                st.session_state["compare_skipped"] = _cmp_skipped
+                st.session_state["compare_cur_non"] = max(0, deck.non_trigger - waiting.non_trigger)
+
+            _results = st.session_state.get("compare_results")
+            if _results:
+                _best = max(r["exact"] for r in _results)
+
+                # ── ตารางสรุป (HTML) — hover ชื่อการ์ดเพื่อดูรูป (ขนาดเท่า Deck Editor) ──
+                _cmp_css = """<style>
+.cmp-tbl{border-collapse:collapse;width:100%;font-size:0.88rem}
+.cmp-tbl th,.cmp-tbl td{border:1px solid rgba(128,128,128,.3);padding:6px 8px;text-align:center;vertical-align:middle}
+.cmp-tbl th{background:rgba(128,128,128,.14)}
+.cmp-tbl td.lft{text-align:left}
+.cmp-best{background:rgba(76,175,80,.16)}
+.cmp-chip{position:relative;cursor:help;white-space:nowrap;border-bottom:1px dotted currentColor}
+.cmp-chip .cmp-pop{visibility:hidden;opacity:0;position:absolute;z-index:9999;left:50%;bottom:135%;transform:translateX(-50%);transition:opacity .12s;pointer-events:none;width:130px}
+.cmp-chip:hover .cmp-pop{visibility:visible;opacity:1}
+.cmp-chip .cmp-pop img{width:130px !important;max-width:none !important;height:auto;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.6);display:block}
+</style>"""
+
+                def _name_chip(_cd: dict, _kind: str, _extra: str = "") -> str:
+                    _nm = _html.escape(_cd.get("name", "—"))
+                    _img = _cd.get("img")
+                    if _img:
+                        return (f'<span class="cmp-chip {_kind}">{_nm}{_extra}'
+                                f'<span class="cmp-pop"><img src="{_img}"></span></span>')
+                    return f"{_nm}{_extra}"
+
+                _hdr = ("<tr><th>บอร์ด</th><th>🎵 Live</th><th>🎯 Required</th>"
+                        "<th>🎭 Members (💰Cost)</th><th>⚡Blade</th><th>💗Hearts</th>"
+                        "<th>🧮 ผลรวม Board</th><th>Exact %</th><th>Δ Exact</th><th>MC %</th></tr>")
+                _trs = []
+                for r in _results:
+                    _is_best = abs(r["exact"] - _best) < 1e-9
+                    _mem_html = ", ".join(
+                        _name_chip(m, "mem", f' <small>(💰{m["cost"]})</small>')
+                        for m in r.get("members_detail", [])
+                    ) or "—"
+                    _liv_html = ", ".join(
+                        _name_chip(lv, "live") for lv in r.get("lives_detail", [])
+                    ) or _html.escape(r.get("live", "—"))
+                    _delta = "—" if _is_best else f"{r['exact'] - _best:+.2f}%"
+                    _cls = " class='cmp-best'" if _is_best else ""
+                    _trs.append(
+                        f"<tr{_cls}>"
+                        f"<td class='lft'>{'🏆 ' if _is_best else ''}{_html.escape(r['label'])}</td>"
+                        f"<td class='lft'>{_liv_html}</td>"
+                        f"<td>{r.get('req', '—')}</td>"
+                        f"<td class='lft'>{_mem_html}</td>"
+                        f"<td>{r['blade']}</td>"
+                        f"<td>{r.get('hearts', '—')}</td>"
+                        f"<td><b>{r.get('board_total', r['blade'] + r.get('hearts_total', 0))}</b></td>"
+                        f"<td><b>{r['exact']:.2f}%</b></td>"
+                        f"<td>{_delta}</td>"
+                        f"<td>{r['mc']:.2f}%</td>"
+                        f"</tr>"
+                    )
+                st.markdown(
+                    f"{_cmp_css}<table class='cmp-tbl'>{_hdr}{''.join(_trs)}</table>",
+                    unsafe_allow_html=True,
+                )
+                st.caption("💡 วางเมาส์ที่ชื่อ Member/Live (มีเส้นใต้ประ) เพื่อดูรูปการ์ด (ขนาดเท่า Deck Editor)")
+
+                # ── กราฟเส้น: อัตราผ่าน vs Non-Trigger คงเหลือใน Deck (1 เส้น/บอร์ด) ──
+                st.markdown("##### 📈 อัตราผ่านตาม Non-Trigger คงเหลือใน Deck")
+                _metric = st.radio(
+                    "เมตริกของกราฟ",
+                    options=["Exact", "Monte Carlo"],
+                    horizontal=True,
+                    key="cmp_line_metric",
+                    label_visibility="collapsed",
+                )
+                _mkey = "exact" if _metric == "Exact" else "mc"
+                _curve_boards = [r for r in _results if r.get("curve")]
+                if not _curve_boards:
+                    st.info("ไม่มีข้อมูลกราฟ — กด 🔄 คำนวณตารางเทียบ อีกครั้ง")
+                else:
+                    _all_non = sorted({pt["non"] for r in _curve_boards for pt in r["curve"]})
+                    _line = {}
+                    for r in _curve_boards:
+                        _d = {pt["non"]: pt[_mkey] for pt in r["curve"]}
+                        _line[r["label"]] = [_d.get(n) for n in _all_non]
+                    _line_df = pd.DataFrame(_line, index=_all_non)
+                    _line_df.index.name = "Non-Trigger คงเหลือใน Deck (ใบ)"
+                    st.line_chart(_line_df)
+                    _cur_non = st.session_state.get("compare_cur_non")
+                    if _cur_non is not None:
+                        st.caption(
+                            f"▶ สถานการณ์ปัจจุบัน: Non-Trigger คงเหลือใน Deck = **{_cur_non} ใบ** "
+                            f"· เมตริก: **{_metric}** · ยิ่ง Non-Trigger เหลือมาก โอกาสยิ่งต่ำ"
+                        )
+
+                if st.session_state.get("compare_skipped"):
+                    st.caption(
+                        f"⚠️ ข้าม {st.session_state['compare_skipped']} บอร์ดที่ไม่มี required hearts "
+                        "(required รวมเป็น 0 — ตั้งค่า Live หรือ required ก่อน)"
+                    )
 
 
 # ==========================================================================
