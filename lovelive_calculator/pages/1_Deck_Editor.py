@@ -642,8 +642,7 @@ with col_deck:
     )
     chips_html += _chip(COLOR_EMOJI[Color.ALL], "All", _all_val)
     chips_html += _chip("⬛", "Non", _non_val)
-    if _sp_count > 0:
-        chips_html += _chip("⭐", "Score+", _sp_count)
+    chips_html += _chip("⭐", "Score+", _sp_count)
 
     st.markdown(
         f'<div class="trigger-grid">'
