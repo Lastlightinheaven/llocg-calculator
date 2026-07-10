@@ -1,1 +1,606 @@
-[{"English Name":"Kosaka Honaka","Japanese Name":"高坂穂乃果"},{"English Name":"Ayase Eli","Japanese Name":"絢瀬絵里"},{"English Name":"Minami Kotori","Japanese Name":"南ことり"},{"English Name":"Sonoda Umi","Japanese Name":"園田海未"},{"English Name":"Hoshizora Rin","Japanese Name":"星空 凛"},{"English Name":"Nishikino Maki","Japanese Name":"西木野真姫"},{"English Name":"Tojo Nozomi","Japanese Name":"東條 希"},{"English Name":"Koizumi Hanayo","Japanese Name":"小泉花陽"},{"English Name":"Yazawa Nico","Japanese Name":"矢澤にこ"},{"English Name":"Takami Chika","Japanese Name":"高海千歌"},{"English Name":"Sakurauchi Riko","Japanese Name":"桜内梨子"},{"English Name":"Matsuura Kanan","Japanese Name":"松浦果南"},{"English Name":"Kurosawa Dia","Japanese Name":"黒澤ダイヤ"},{"English Name":"Watanabe You","Japanese Name":"渡辺 曜"},{"English Name":"Tsushima Yoshiko","Japanese Name":"津島善子"},{"English Name":"Kunikida Hanamaru","Japanese Name":"国木田花丸"},{"English Name":"Ohara Mari","Japanese Name":"小原鞠莉"},{"English Name":"Kurosawa Ruby","Japanese Name":"黒澤ルビィ"},{"English Name":"Uehara Ayumu","Japanese Name":"上原歩夢"},{"English Name":"Nakasu Kasumi","Japanese Name":"中須かすみ"},{"English Name":"Osaka Shizuku","Japanese Name":"桜坂しずく"},{"English Name":"Asaka Karin","Japanese Name":"朝香果林"},{"English Name":"Miyashita Ai","Japanese Name":"宮下 愛"},{"English Name":"Konoe Kanata","Japanese Name":"近江彼方"},{"English Name":"Yuki Setsuna","Japanese Name":"優木せつ菜"},{"English Name":"Emma Verde","Japanese Name":"エマ・ヴェルデ"},{"English Name":"Tennoji Rina","Japanese Name":"天王寺璃奈"},{"English Name":"Mifune Shioriko","Japanese Name":"三船栞子"},{"English Name":"Mia Taylor","Japanese Name":"ミア・テイラー"},{"English Name":"Zhong Lanzhu","Japanese Name":"鐘 嵐珠"},{"English Name":"Takasaki Yu","Japanese Name":"高咲 侑"},{"English Name":"Shibuya Kanon","Japanese Name":"澁谷かのん"},{"English Name":"Tang Keke","Japanese Name":"唐 可可"},{"English Name":"Arashi Chisato","Japanese Name":"嵐 千砂都"},{"English Name":"Heanna Sumire","Japanese Name":"平安名すみれ"},{"English Name":"Hazuki Ren","Japanese Name":"葉月 恋"},{"English Name":"Sakurakoji Kinako","Japanese Name":"桜小路きな子"},{"English Name":"Yoneme Mei","Japanese Name":"米女メイ"},{"English Name":"Wakana Shiki","Japanese Name":"若菜四季"},{"English Name":"Onitsuka Natsumi","Japanese Name":"鬼塚夏美"},{"English Name":"Wien Margarete","Japanese Name":"ウィーン・マルガレーテ"},{"English Name":"Onitsuka Tomari","Japanese Name":"鬼塚冬毬"},{"English Name":"Hinoshita Kaho","Japanese Name":"日野下花帆"},{"English Name":"Murano Sayaka","Japanese Name":"村野さやか"},{"English Name":"Otomune Kozue","Japanese Name":"乙宗 梢"},{"English Name":"Yugiri Tsuzuri","Japanese Name":"夕霧綴理"},{"English Name":"Osawa Rurino","Japanese Name":"大沢瑠璃乃"},{"English Name":"Fujishima Megumi","Japanese Name":"藤島 慈"},{"English Name":"Momose Ginko","Japanese Name":"百生吟子"},{"English Name":"Kachimachi Kosuzu","Japanese Name":"徒町小鈴"},{"English Name":"Anyoji Hime","Japanese Name":"安養寺姫芽"},{"English Name":"Katsuragi Izumi","Japanese Name":"桂城 泉"},{"English Name":"Ceras Yanagida Lilienfeld","Japanese Name":"セラス 柳田 リリエンフェルト"},{"English Name":"Kira Tsubasa","Japanese Name":"綺羅ツバサ"},{"English Name":"Yuuki Anju","Japanese Name":"優木あんじゅ"},{"English Name":"Toudou Erena","Japanese Name":"統堂英玲奈"},{"English Name":"Kazuno Sarah","Japanese Name":"鹿角聖良"},{"English Name":"Kazuno Leah","Japanese Name":"鹿角理亞"},{"English Name":"Hiiragi Mao","Japanese Name":"柊摩央"},{"English Name":"Hijirisawa Yuuna","Japanese Name":"聖澤悠奈"}]
+[
+ {
+  "English Name": "Kosaka Honaka",
+  "Japanese Name": "高坂穂乃果"
+ },
+ {
+  "English Name": "Ayase Eli",
+  "Japanese Name": "絢瀬絵里"
+ },
+ {
+  "English Name": "Minami Kotori",
+  "Japanese Name": "南ことり"
+ },
+ {
+  "English Name": "Sonoda Umi",
+  "Japanese Name": "園田海未"
+ },
+ {
+  "English Name": "Hoshizora Rin",
+  "Japanese Name": "星空 凛"
+ },
+ {
+  "English Name": "Nishikino Maki",
+  "Japanese Name": "西木野真姫"
+ },
+ {
+  "English Name": "Tojo Nozomi",
+  "Japanese Name": "東條 希"
+ },
+ {
+  "English Name": "Koizumi Hanayo",
+  "Japanese Name": "小泉花陽"
+ },
+ {
+  "English Name": "Yazawa Nico",
+  "Japanese Name": "矢澤にこ"
+ },
+ {
+  "English Name": "Takami Chika",
+  "Japanese Name": "高海千歌"
+ },
+ {
+  "English Name": "Sakurauchi Riko",
+  "Japanese Name": "桜内梨子"
+ },
+ {
+  "English Name": "Matsuura Kanan",
+  "Japanese Name": "松浦果南"
+ },
+ {
+  "English Name": "Kurosawa Dia",
+  "Japanese Name": "黒澤ダイヤ"
+ },
+ {
+  "English Name": "Watanabe You",
+  "Japanese Name": "渡辺 曜"
+ },
+ {
+  "English Name": "Tsushima Yoshiko",
+  "Japanese Name": "津島善子"
+ },
+ {
+  "English Name": "Kunikida Hanamaru",
+  "Japanese Name": "国木田花丸"
+ },
+ {
+  "English Name": "Ohara Mari",
+  "Japanese Name": "小原鞠莉"
+ },
+ {
+  "English Name": "Kurosawa Ruby",
+  "Japanese Name": "黒澤ルビィ"
+ },
+ {
+  "English Name": "Uehara Ayumu",
+  "Japanese Name": "上原歩夢"
+ },
+ {
+  "English Name": "Nakasu Kasumi",
+  "Japanese Name": "中須かすみ"
+ },
+ {
+  "English Name": "Osaka Shizuku",
+  "Japanese Name": "桜坂しずく"
+ },
+ {
+  "English Name": "Asaka Karin",
+  "Japanese Name": "朝香果林"
+ },
+ {
+  "English Name": "Miyashita Ai",
+  "Japanese Name": "宮下 愛"
+ },
+ {
+  "English Name": "Konoe Kanata",
+  "Japanese Name": "近江彼方"
+ },
+ {
+  "English Name": "Yuki Setsuna",
+  "Japanese Name": "優木せつ菜"
+ },
+ {
+  "English Name": "Emma Verde",
+  "Japanese Name": "エマ・ヴェルデ"
+ },
+ {
+  "English Name": "Tennoji Rina",
+  "Japanese Name": "天王寺璃奈"
+ },
+ {
+  "English Name": "Mifune Shioriko",
+  "Japanese Name": "三船栞子"
+ },
+ {
+  "English Name": "Mia Taylor",
+  "Japanese Name": "ミア・テイラー"
+ },
+ {
+  "English Name": "Zhong Lanzhu",
+  "Japanese Name": "鐘 嵐珠"
+ },
+ {
+  "English Name": "Takasaki Yu",
+  "Japanese Name": "高咲 侑"
+ },
+ {
+  "English Name": "Shibuya Kanon",
+  "Japanese Name": "澁谷かのん"
+ },
+ {
+  "English Name": "Tang Keke",
+  "Japanese Name": "唐 可可"
+ },
+ {
+  "English Name": "Arashi Chisato",
+  "Japanese Name": "嵐 千砂都"
+ },
+ {
+  "English Name": "Heanna Sumire",
+  "Japanese Name": "平安名すみれ"
+ },
+ {
+  "English Name": "Hazuki Ren",
+  "Japanese Name": "葉月 恋"
+ },
+ {
+  "English Name": "Sakurakoji Kinako",
+  "Japanese Name": "桜小路きな子"
+ },
+ {
+  "English Name": "Yoneme Mei",
+  "Japanese Name": "米女メイ"
+ },
+ {
+  "English Name": "Wakana Shiki",
+  "Japanese Name": "若菜四季"
+ },
+ {
+  "English Name": "Onitsuka Natsumi",
+  "Japanese Name": "鬼塚夏美"
+ },
+ {
+  "English Name": "Wien Margarete",
+  "Japanese Name": "ウィーン・マルガレーテ"
+ },
+ {
+  "English Name": "Onitsuka Tomari",
+  "Japanese Name": "鬼塚冬毬"
+ },
+ {
+  "English Name": "Hinoshita Kaho",
+  "Japanese Name": "日野下花帆"
+ },
+ {
+  "English Name": "Murano Sayaka",
+  "Japanese Name": "村野さやか"
+ },
+ {
+  "English Name": "Otomune Kozue",
+  "Japanese Name": "乙宗 梢"
+ },
+ {
+  "English Name": "Yugiri Tsuzuri",
+  "Japanese Name": "夕霧綴理"
+ },
+ {
+  "English Name": "Osawa Rurino",
+  "Japanese Name": "大沢瑠璃乃"
+ },
+ {
+  "English Name": "Fujishima Megumi",
+  "Japanese Name": "藤島 慈"
+ },
+ {
+  "English Name": "Momose Ginko",
+  "Japanese Name": "百生吟子"
+ },
+ {
+  "English Name": "Kachimachi Kosuzu",
+  "Japanese Name": "徒町小鈴"
+ },
+ {
+  "English Name": "Anyoji Hime",
+  "Japanese Name": "安養寺姫芽"
+ },
+ {
+  "English Name": "Katsuragi Izumi",
+  "Japanese Name": "桂城 泉"
+ },
+ {
+  "English Name": "Ceras Yanagida Lilienfeld",
+  "Japanese Name": "セラス 柳田 リリエンフェルト"
+ },
+ {
+  "English Name": "Kira Tsubasa",
+  "Japanese Name": "綺羅ツバサ"
+ },
+ {
+  "English Name": "Yuuki Anju",
+  "Japanese Name": "優木あんじゅ"
+ },
+ {
+  "English Name": "Toudou Erena",
+  "Japanese Name": "統堂英玲奈"
+ },
+ {
+  "English Name": "Kazuno Sarah",
+  "Japanese Name": "鹿角聖良"
+ },
+ {
+  "English Name": "Kazuno Leah",
+  "Japanese Name": "鹿角理亞"
+ },
+ {
+  "English Name": "Hiiragi Mao",
+  "Japanese Name": "柊摩央"
+ },
+ {
+  "English Name": "Hijirisawa Yuuna",
+  "Japanese Name": "聖澤悠奈"
+ },
+ {
+  "English Name": "Dream Believers (104th Gen Ver.)",
+  "Japanese Name": "Dream Believers (104期 Ver.)"
+ },
+ {
+  "English Name": "Dream Believers (105th Gen Ver.)",
+  "Japanese Name": "Dream Believers（105期Ver.）"
+ },
+ {
+  "English Name": "Go!! Restart",
+  "Japanese Name": "Go!! リスタート"
+ },
+ {
+  "English Name": "Link to the FUTURE (104th Gen Ver.)",
+  "Japanese Name": "Link to the FUTURE（104期Ver.）"
+ },
+ {
+  "English Name": "MY Mai☆TONIGHT",
+  "Japanese Name": "MY舞☆TONIGHT"
+ },
+ {
+  "English Name": "Very! Very! COCO Natsu",
+  "Japanese Name": "Very! Very! COCO夏っ"
+ },
+ {
+  "English Name": "Welcome to Bokura no Sekai",
+  "Japanese Name": "Welcome to 僕らのセカイ"
+ },
+ {
+  "English Name": "Kitto Seishun ga Kikoeru",
+  "Japanese Name": "きっと青春が聞こえる"
+ },
+ {
+  "English Name": "Korekara no Someday",
+  "Japanese Name": "これからのSomeday"
+ },
+ {
+  "English Name": "Sore wa Bokutachi no Kiseki",
+  "Japanese Name": "それは僕たちの奇跡"
+ },
+ {
+  "English Name": "Doko ni Itemo Kimi wa Kimi",
+  "Japanese Name": "どこにいても君は君"
+ },
+ {
+  "English Name": "Miracreation",
+  "Japanese Name": "みらくりえーしょん"
+ },
+ {
+  "English Name": "Mogyutto \"love\" de Sekkinchuu!",
+  "Japanese Name": "もぎゅっと\"love\"で接近中！"
+ },
+ {
+  "English Name": "Aikotoba!",
+  "Japanese Name": "アイコトバ！"
+ },
+ {
+  "English Name": "Identity",
+  "Japanese Name": "アイデンティティ"
+ },
+ {
+  "English Name": "I Do Me!",
+  "Japanese Name": "アイドゥーミー！"
+ },
+ {
+  "English Name": "Aoku Haruka",
+  "Japanese Name": "アオクハルカ"
+ },
+ {
+  "English Name": "Kokon Touzai",
+  "Japanese Name": "ココン東西"
+ },
+ {
+  "English Name": "Kowareyasuki",
+  "Japanese Name": "コワレヤスキ"
+ },
+ {
+  "English Name": "Saikou Heart",
+  "Japanese Name": "サイコーハート"
+ },
+ {
+  "English Name": "Shekira☆☆☆",
+  "Japanese Name": "シェキラ☆☆☆"
+ },
+ {
+  "English Name": "Jojo Kiryu",
+  "Japanese Name": "ジョージョーキリュー"
+ },
+ {
+  "English Name": "Takaramonos",
+  "Japanese Name": "タカラモノズ"
+ },
+ {
+  "English Name": "Daisuki Dattara Daijoubu!",
+  "Japanese Name": "ダイスキだったらダイジョウブ！"
+ },
+ {
+  "English Name": "Diamond Princess no Yuuutsu",
+  "Japanese Name": "ダイヤモンドプリンセスの憂鬱"
+ },
+ {
+  "English Name": "Tsunagaru Connect",
+  "Japanese Name": "ツナガルコネクト"
+ },
+ {
+  "English Name": "Tsubasa La Liberté",
+  "Japanese Name": "ツバサ・ラ・リベルテ"
+ },
+ {
+  "English Name": "Distortion",
+  "Japanese Name": "ディストーション"
+ },
+ {
+  "English Name": "Toriko Riko PLEASE!!",
+  "Japanese Name": "トリコリコPLEASE!!"
+ },
+ {
+  "English Name": "Do! Do! Do!",
+  "Japanese Name": "ド！ド！ド！"
+ },
+ {
+  "English Name": "Neutral",
+  "Japanese Name": "ニュートラル"
+ },
+ {
+  "English Name": "Nonfiction!!",
+  "Japanese Name": "ノンフィクション!!"
+ },
+ {
+  "English Name": "Hanamusubi",
+  "Japanese Name": "ハナムスビ"
+ },
+ {
+  "English Name": "Birdcage",
+  "Japanese Name": "バアドケージ"
+ },
+ {
+  "English Name": "Vitamin SUMMER!",
+  "Japanese Name": "ビタミンSUMMER!"
+ },
+ {
+  "English Name": "Fanfare!!!",
+  "Japanese Name": "ファンファーレ！！！"
+ },
+ {
+  "English Name": "Fusion Crust",
+  "Japanese Name": "フュージョンクラスト"
+ },
+ {
+  "English Name": "Blue Moment",
+  "Japanese Name": "ブルウモーメント"
+ },
+ {
+  "English Name": "Mi wa μ'sic no Mi",
+  "Japanese Name": "ミはμ'sicのミ"
+ },
+ {
+  "English Name": "Miracle STAY TUNE!",
+  "Japanese Name": "ミラクル STAY TUNE！"
+ },
+ {
+  "English Name": "Yume no Tobira",
+  "Japanese Name": "ユメノトビラ"
+ },
+ {
+  "English Name": "Yumewazurai",
+  "Japanese Name": "ユメワズライ"
+ },
+ {
+  "English Name": "Yume Kataru yori Yume Utaou",
+  "Japanese Name": "ユメ語るよりユメ歌おう"
+ },
+ {
+  "English Name": "Ladybug",
+  "Japanese Name": "レディバグ"
+ },
+ {
+  "English Name": "Otohime Gokoro de Koi Kyuuden",
+  "Japanese Name": "乙姫心で恋宮殿"
+ },
+ {
+  "English Name": "Bokura no LIVE Kimi to no LIFE",
+  "Japanese Name": "僕らのLIVE 君とのLIFE"
+ },
+ {
+  "English Name": "Bokura no Hashittekita Michi wa...",
+  "Japanese Name": "僕らの走ってきた道は・・・"
+ },
+ {
+  "English Name": "Bokura wa Ima no Naka de",
+  "Japanese Name": "僕らは今のなかで"
+ },
+ {
+  "English Name": "Genki Zenkai DAY! DAY! DAY!",
+  "Japanese Name": "元気全開DAY！DAY！DAY！"
+ },
+ {
+  "English Name": "Zenhoui Kyun♡",
+  "Japanese Name": "全方位キュン♡"
+ },
+ {
+  "English Name": "Bouken Type A, B, C!!",
+  "Japanese Name": "冒険Type A, B, C!!"
+ },
+ {
+  "English Name": "Yuuki wa Doko ni? Kimi no Mune ni!",
+  "Japanese Name": "勇気はどこに?君の胸に!"
+ },
+ {
+  "English Name": "Atarayo Hanabi",
+  "Japanese Name": "可惜夜花火"
+ },
+ {
+  "English Name": "Kimi no Kokoro wa Kagayaiteru kai?",
+  "Japanese Name": "君のこころは輝いてるかい？"
+ },
+ {
+  "English Name": "Natsumeki Pain",
+  "Japanese Name": "夏めきペイン"
+ },
+ {
+  "English Name": "Natsuiro Egao de 1,2,Jump!",
+  "Japanese Name": "夏色えがおで1,2,Jump!"
+ },
+ {
+  "English Name": "Yume ga Bokura no Taiyou sa",
+  "Japanese Name": "夢が僕らの太陽さ"
+ },
+ {
+  "English Name": "Yume de Yozora wo Terashitai",
+  "Japanese Name": "夢で夜空を照らしたい"
+ },
+ {
+  "English Name": "Hajimari wa Kimi no Sora",
+  "Japanese Name": "始まりは君の空"
+ },
+ {
+  "English Name": "Sayonakidori Renka",
+  "Japanese Name": "小夜啼鳥恋詩"
+ },
+ {
+  "English Name": "Tokonatsu☆Sunshine",
+  "Japanese Name": "常夏☆サンシャイン"
+ },
+ {
+  "English Name": "Binetsu kara Mystery",
+  "Japanese Name": "微熱からMystery"
+ },
+ {
+  "English Name": "Koi ni Naritai AQUARIUM",
+  "Japanese Name": "恋になりたいAQUARIUM"
+ },
+ {
+  "English Name": "Omoi yo Hitotsu ni Nare",
+  "Japanese Name": "想いよひとつになれ"
+ },
+ {
+  "English Name": "Ai♡Scream!",
+  "Japanese Name": "愛♡スクリ～ム！"
+ },
+ {
+  "English Name": "Aishiteru Banzai!",
+  "Japanese Name": "愛してるばんざーい!"
+ },
+ {
+  "English Name": "Dakishimeru Hanabira",
+  "Japanese Name": "抱きしめる花びら"
+ },
+ {
+  "English Name": "Tsukuyomi Kurage",
+  "Japanese Name": "月夜見海月"
+ },
+ {
+  "English Name": "Mitaiken HORIZON",
+  "Japanese Name": "未体験HORIZON"
+ },
+ {
+  "English Name": "Mirai no Bokura wa Shitteru yo",
+  "Japanese Name": "未来の僕らは知ってるよ"
+ },
+ {
+  "English Name": "Mirai wa Kaze no You ni",
+  "Japanese Name": "未来は風のように"
+ },
+ {
+  "English Name": "Mirai Harmony",
+  "Japanese Name": "未来ハーモニー"
+ },
+ {
+  "English Name": "Mirai Yohou Hallelujah!",
+  "Japanese Name": "未来予報ハレルヤ！"
+ },
+ {
+  "English Name": "Mijuku DREAMER",
+  "Japanese Name": "未熟DREAMER"
+ },
+ {
+  "English Name": "Suisai Sekai",
+  "Japanese Name": "水彩世界"
+ },
+ {
+  "English Name": "Towa Hours",
+  "Japanese Name": "永久hours"
+ },
+ {
+  "English Name": "Mutekikyuu*Believer",
+  "Japanese Name": "無敵級*ビリーバー"
+ },
+ {
+  "English Name": "Genyou Yakou",
+  "Japanese Name": "眩耀夜行"
+ },
+ {
+  "English Name": "Shiranai Love＊Oshiete Love",
+  "Japanese Name": "知らないLove＊教えてLove"
+ },
+ {
+  "English Name": "Watashi no Symphony ~Shibuya Kanon Ver.~",
+  "Japanese Name": "私のSymphony 〜澁谷かのんVer.〜"
+ },
+ {
+  "English Name": "Egao no Promise",
+  "Japanese Name": "笑顔のPromise"
+ },
+ {
+  "English Name": "Zettaiteki LOVER",
+  "Japanese Name": "絶対的LOVER"
+ },
+ {
+  "English Name": "Ryouran! Victory Road",
+  "Japanese Name": "繚乱！ビクトリーロード"
+ },
+ {
+  "English Name": "Nijiiro Passions!",
+  "Japanese Name": "虹色Passions！"
+ },
+ {
+  "English Name": "Kaguya no Shiro de Odoritai",
+  "Japanese Name": "輝夜の城で踊りたい"
+ },
+ {
+  "English Name": "Kinmirai Happy End",
+  "Japanese Name": "近未来ハッピーエンド"
+ },
+ {
+  "English Name": "Oikakeru Yume no Saki de",
+  "Japanese Name": "追いかける夢の先で"
+ },
+ {
+  "English Name": "Tousou Meisou Möbius Loop",
+  "Japanese Name": "逃走迷走メビウスループ"
+ },
+ {
+  "English Name": "Sakkaku CROSSROADS",
+  "Japanese Name": "錯覚CROSSROADS"
+ },
+ {
+  "English Name": "Yuki Mau Sora to Nibyou no Eien",
+  "Japanese Name": "雪舞う空と二秒の永遠 "
+ },
+ {
+  "English Name": "Aozora Jumping Heart",
+  "Japanese Name": "青空Jumping Heart"
+ }
+]

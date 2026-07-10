@@ -25,6 +25,32 @@ from deck_import import (
     DecklogError, compose_deck_from_entries,
     fetch_deck_from_decklog, parse_pasted_deck_list,
 )
+import icons
+
+# icon แทน emoji (ใช้เฉพาะที่ render ผ่าน HTML) — ในหน้านี้ ⚡ = Blade (Yell), 💎 = Cost (energy)
+_ICON_BLADE = icons.blade() or "⚡"
+_ICON_ENERGY = icons.energy() or "💎"
+_ICON_SCORE = icons.score() or "⭐"
+
+
+def _bh_icon(color) -> str:
+    """icon blade heart ตามสี (fallback emoji)."""
+    return icons.bladeheart(color) or COLOR_EMOJI.get(color, "")
+
+
+def _icon_number_input(icon_html: str, text: str, **kwargs):
+    """number_input ที่ label ใช้ icon PNG — render label เป็น markdown HTML แล้วซ่อน label ของ widget."""
+    st.markdown(
+        f"<div style='font-size:0.85rem;font-weight:600;margin-bottom:0.15rem;"
+        f"line-height:1.25'>{icon_html} {text}</div>",
+        unsafe_allow_html=True,
+    )
+    return st.number_input(text, label_visibility="collapsed", **kwargs)
+
+
+def _color_number_input(color, **kwargs):
+    """number_input ที่ label = icon สี + ชื่อสี (แทน color_label เดิม)."""
+    return _icon_number_input(_bh_icon(color), COLOR_LABELS_TH.get(color, getattr(color, "value", str(color))), **kwargs)
 
 
 st.set_page_config(
@@ -580,11 +606,12 @@ def _apply_deck_composition(dc: DeckComposition) -> None:
     }
 
 
-def _store_imported_deck(source: str, entries, title: str = "") -> None:
+def _store_imported_deck(source: str, entries, title: str = "", code: str = "") -> None:
     """Persist รายการการ์ดที่ import สำเร็จ เพื่อแสดงตารางในรอบ render ถัดไป."""
     st.session_state.imported_entries = list(entries)
     st.session_state.imported_source = source      # "decklog" | "paste"
     st.session_state.imported_title = title
+    st.session_state.imported_deck_code = code     # Decklog code (ว่างถ้ามาจาก paste) — ใช้ใน Turn Planner bundle
     # Reset game board slots so stale card selections don't carry over to new deck
     for _i in range(5):
         st.session_state[f"stage_slot_{_i}"] = ""
@@ -804,19 +831,23 @@ def _render_board_stat_editor() -> None:
                 for c in HEART_COLORS:
                     st.session_state[f"stg_ov_{i}_{c.value}"] = int(card.base_heart.get(c, 0) or 0)
             _pos = _pos_lbl[i] if i < 3 else f"#{i+1}"
-            st.markdown(f"🎭 **{card.name}**  ·  📍{_pos}  ·  ⚡ฐาน {card.blade}  ·  💎{card.cost}")
+            st.markdown(
+                f"🎭 **{card.name}**  ·  📍{_pos}  ·  {_ICON_BLADE}ฐาน {card.blade}  ·  {_ICON_ENERGY}{card.cost}",
+                unsafe_allow_html=True,
+            )
             if getattr(card, "text_th", ""):
                 st.caption(card.text_th)
             _ec = st.columns(7)
             with _ec[0]:
-                st.number_input("⚡ Blade", min_value=0, max_value=60,
-                                key=f"stg_ov_{i}_blade",
-                                on_change=_keep_open, args=("board_stat_open",))
+                _icon_number_input(_ICON_BLADE, "Blade", min_value=0, max_value=60,
+                                   key=f"stg_ov_{i}_blade",
+                                   on_change=_keep_open, args=("board_stat_open",))
             for _j, c in enumerate(HEART_COLORS):
                 with _ec[_j + 1]:
-                    st.number_input(color_label(c), min_value=0, max_value=30,
-                                    key=f"stg_ov_{i}_{c.value}",
-                                    on_change=_keep_open, args=("board_stat_open",))
+                    _icon_number_input(_bh_icon(c), COLOR_LABELS_TH.get(c, c.value),
+                                       min_value=0, max_value=30,
+                                       key=f"stg_ov_{i}_{c.value}",
+                                       on_change=_keep_open, args=("board_stat_open",))
 
         # ── Lives: Required Hearts ───────────────────────────────────────
         for i, cn in live_occ:
@@ -834,9 +865,10 @@ def _render_board_stat_editor() -> None:
             _lc7 = st.columns(7)
             for _k, c in enumerate(HEART_COLORS + [Color.GRAY]):
                 with _lc7[_k]:
-                    st.number_input(color_label(c), min_value=0, max_value=20,
-                                    key=f"stg_lv_{i}_{c.value}",
-                                    on_change=_keep_open, args=("board_stat_open",))
+                    _icon_number_input(_bh_icon(c), COLOR_LABELS_TH.get(c, c.value),
+                                       min_value=0, max_value=20,
+                                       key=f"stg_lv_{i}_{c.value}",
+                                       on_change=_keep_open, args=("board_stat_open",))
 
 
 # ── Compare boards (scenarios) helpers ─────────────────────────────────────
@@ -1129,10 +1161,12 @@ def _render_game_board() -> None:
 
                 lc = live_lut.get(sel)
                 if lc and lc.required_hearts:
-                    st.caption("  ".join(
-                        f"{COLOR_EMOJI.get(c, '')}×{n}"
-                        for c, n in lc.required_hearts.items()
-                    ))
+                    st.markdown(
+                        "<div style='text-align:center;color:#888;font-size:0.85rem'>"
+                        + "  ".join(f"{_bh_icon(c)}×{n}" for c, n in lc.required_hearts.items())
+                        + "</div>",
+                        unsafe_allow_html=True,
+                    )
                 elif lc is None and sel:
                     st.caption("⚠️ ไม่พบข้อมูล required hearts — กด Refresh DB")
 
@@ -1190,10 +1224,10 @@ def _render_game_board() -> None:
                 now = idx.get(sel)
                 if now:
                     bh = " ".join(
-                        f"{COLOR_EMOJI.get(c, '')}×{n}"
+                        f"{_bh_icon(c)}×{n}"
                         for c, n in now.base_heart.items() if n > 0
                     )
-                    bl = f"⚡×{now.blade}" if now.blade else ""
+                    bl = f"{_ICON_BLADE}×{now.blade}" if now.blade else ""
                     info = "  ".join(filter(None, [bl, bh]))
                     st.markdown(
                         f'<p style="text-align:center;font-size:0.82em;margin:2px 0 0 0;">{info or "—"}</p>',
@@ -1384,7 +1418,7 @@ with st.sidebar:
                                 live_cards=st.session_state.get("live_cards", []),
                             )
                             _apply_deck_composition(dc)
-                            _store_imported_deck("decklog", deck.entries, deck.title)
+                            _store_imported_deck("decklog", deck.entries, deck.title, code=deck.code)
                             title_suffix = f" · “{deck.title}”" if deck.title else ""
                             st.success(
                                 f"Import สำเร็จ: {sum(e.count for e in deck.entries)} ใบ "
@@ -1504,24 +1538,27 @@ with st.sidebar:
         col_l.markdown(f"<span style='color:var(--llocg-text-sub)'>{label}</span>", unsafe_allow_html=True)
         col_r.markdown(f"<span style='font-weight:700;font-size:1.1em'>{value}</span>", unsafe_allow_html=True)
 
+    def _bh_label(color) -> str:
+        return f"{icons.bladeheart(color) or COLOR_EMOJI.get(color, '')} {COLOR_LABELS_TH[color]}"
+
     st.subheader("Trigger Hearts by Color")
     if not _has_deck:
         st.caption("— ยังไม่มี deck (Import หรือ Apply จาก Deck Editor ก่อน)")
     else:
-        _deck_row(color_label(Color.RED),    deck_red)
-        _deck_row(color_label(Color.BLUE),   deck_blue)
-        _deck_row(color_label(Color.GREEN),  deck_green)
-        _deck_row(color_label(Color.YELLOW), deck_yellow)
-        _deck_row(color_label(Color.PURPLE), deck_purple)
-        _deck_row(color_label(Color.PINK),   deck_pink)
+        _deck_row(_bh_label(Color.RED),    deck_red)
+        _deck_row(_bh_label(Color.BLUE),   deck_blue)
+        _deck_row(_bh_label(Color.GREEN),  deck_green)
+        _deck_row(_bh_label(Color.YELLOW), deck_yellow)
+        _deck_row(_bh_label(Color.PURPLE), deck_purple)
+        _deck_row(_bh_label(Color.PINK),   deck_pink)
 
     st.subheader("Special")
     if not _has_deck:
         st.caption("— ยังไม่มี deck")
     else:
-        _deck_row(f"{COLOR_EMOJI[Color.ALL]} All Trigger (wildcard)", deck_all)
-        _deck_row("⬛ Non-Trigger (ธรรมดา)", deck_non_plain)
-        _deck_row("⭐ Score+ Live ใน Deck", deck_sp)
+        _deck_row(f"{icons.bladeheart(Color.ALL) or COLOR_EMOJI[Color.ALL]} All Trigger (wildcard)", deck_all)
+        _deck_row(f"{icons.bladeheart_none() or '⬛'} Non-Trigger (ธรรมดา)", deck_non_plain)
+        _deck_row(f"{icons.score() or '⭐'} Score+ Live ใน Deck", deck_sp)
 
     deck = DeckComposition(
         trigger_counts={
@@ -1612,19 +1649,19 @@ if _has_deck:
     st.caption("จำนวน Blade และ Basic Hearts — ค่าเริ่มต้นมาจากการ์ดที่เลือกใน Game Board ปรับได้โดยตรง")
     _ov_cols = st.columns(4)
     with _ov_cols[0]:
-        blade_count = st.number_input(
-            "⚡ Blade รวม (จำนวนจั่ว Yell)",
+        blade_count = _icon_number_input(
+            _ICON_BLADE, "Blade รวม (จำนวนจั่ว Yell)",
             min_value=0, max_value=60, key="ov_blade",
         )
         st.markdown("**Basic Hearts**")
-        sb_red = st.number_input(color_label(Color.RED), min_value=0, max_value=30, key="ov_sb_red")
-        sb_blue = st.number_input(color_label(Color.BLUE), min_value=0, max_value=30, key="ov_sb_blue")
+        sb_red = _icon_number_input(_bh_icon(Color.RED), COLOR_LABELS_TH[Color.RED], min_value=0, max_value=30, key="ov_sb_red")
+        sb_blue = _icon_number_input(_bh_icon(Color.BLUE), COLOR_LABELS_TH[Color.BLUE], min_value=0, max_value=30, key="ov_sb_blue")
     with _ov_cols[1]:
-        sb_green = st.number_input(color_label(Color.GREEN), min_value=0, max_value=30, key="ov_sb_green")
-        sb_yellow = st.number_input(color_label(Color.YELLOW), min_value=0, max_value=30, key="ov_sb_yellow")
+        sb_green = _icon_number_input(_bh_icon(Color.GREEN), COLOR_LABELS_TH[Color.GREEN], min_value=0, max_value=30, key="ov_sb_green")
+        sb_yellow = _icon_number_input(_bh_icon(Color.YELLOW), COLOR_LABELS_TH[Color.YELLOW], min_value=0, max_value=30, key="ov_sb_yellow")
     with _ov_cols[2]:
-        sb_purple = st.number_input(color_label(Color.PURPLE), min_value=0, max_value=30, key="ov_sb_purple")
-        sb_pink = st.number_input(color_label(Color.PINK), min_value=0, max_value=30, key="ov_sb_pink")
+        sb_purple = _icon_number_input(_bh_icon(Color.PURPLE), COLOR_LABELS_TH[Color.PURPLE], min_value=0, max_value=30, key="ov_sb_purple")
+        sb_pink = _icon_number_input(_bh_icon(Color.PINK), COLOR_LABELS_TH[Color.PINK], min_value=0, max_value=30, key="ov_sb_pink")
     stage = StageMembers(
         basic_hearts={
             Color.RED: sb_red, Color.BLUE: sb_blue, Color.GREEN: sb_green,
@@ -1632,8 +1669,11 @@ if _has_deck:
         },
         blade_count=blade_count,
     )
-    st.info(
-        f"🎭 Basic Hearts รวม: **{stage.total_basic_hearts()}**  |  ⚡ Yell draws: **{blade_count}**"
+    st.markdown(
+        f"<div style='background:rgba(41,182,246,.14);border-radius:8px;padding:8px 12px'>"
+        f"🎭 Basic Hearts รวม: <b>{stage.total_basic_hearts()}</b>  |  "
+        f"{_ICON_BLADE} Yell draws: <b>{blade_count}</b></div>",
+        unsafe_allow_html=True,
     )
 
     st.divider()
@@ -1677,8 +1717,8 @@ if _has_deck:
             name_ov = st.text_input("ชื่อ Live", key=name_key_gb)
             req_ov = {}
             for color in HEART_COLORS + [Color.GRAY]:
-                n_ov = st.number_input(
-                    color_label(color), min_value=0, max_value=20,
+                n_ov = _color_number_input(
+                    color, min_value=0, max_value=20,
                     key=f"live_gb_{i}_{color.value}",
                 )
                 if n_ov > 0:
@@ -1907,19 +1947,19 @@ if _has_deck:
 
     _wrc = st.columns(4)
     with _wrc[0]:
-        wr_red = st.number_input(color_label(Color.RED), min_value=0, max_value=deck_red, key="wr_red")
-        wr_blue = st.number_input(color_label(Color.BLUE), min_value=0, max_value=deck_blue, key="wr_blue")
+        wr_red = _color_number_input(Color.RED, min_value=0, max_value=deck_red, key="wr_red")
+        wr_blue = _color_number_input(Color.BLUE, min_value=0, max_value=deck_blue, key="wr_blue")
     with _wrc[1]:
-        wr_green = st.number_input(color_label(Color.GREEN), min_value=0, max_value=deck_green, key="wr_green")
-        wr_yellow = st.number_input(color_label(Color.YELLOW), min_value=0, max_value=deck_yellow, key="wr_yellow")
+        wr_green = _color_number_input(Color.GREEN, min_value=0, max_value=deck_green, key="wr_green")
+        wr_yellow = _color_number_input(Color.YELLOW, min_value=0, max_value=deck_yellow, key="wr_yellow")
     with _wrc[2]:
-        wr_purple = st.number_input(color_label(Color.PURPLE), min_value=0, max_value=deck_purple, key="wr_purple")
-        wr_pink = st.number_input(color_label(Color.PINK), min_value=0, max_value=deck_pink, key="wr_pink")
+        wr_purple = _color_number_input(Color.PURPLE, min_value=0, max_value=deck_purple, key="wr_purple")
+        wr_pink = _color_number_input(Color.PINK, min_value=0, max_value=deck_pink, key="wr_pink")
     with _wrc[3]:
-        wr_all = st.number_input(f"{COLOR_EMOJI[Color.ALL]} All Trigger",
-                                 min_value=0, max_value=deck_all, key="wr_all")
-        wr_non_plain = st.number_input(
-            "⬛ Non-Trigger (ธรรมดา)",
+        wr_all = _icon_number_input(_bh_icon(Color.ALL), "All Trigger",
+                                    min_value=0, max_value=deck_all, key="wr_all")
+        wr_non_plain = _icon_number_input(
+            icons.bladeheart_none() or "⬛", "Non-Trigger (ธรรมดา)",
             min_value=0, max_value=deck_non_plain, key="wr_non_plain",
             help="Non-Trigger ธรรมดาที่ออกไปแล้ว (ไม่นับ Score+ Live)",
         )
@@ -1933,8 +1973,8 @@ if _has_deck:
             st.session_state["wr_sp_extra"] = 0
         _spc1, _spc2 = st.columns([1, 2])
         with _spc1:
-            wr_sp_extra = st.number_input(
-                "⭐ Score+ Live ที่ออกไปทางอื่น",
+            wr_sp_extra = _icon_number_input(
+                _ICON_SCORE, "Score+ Live ที่ออกไปทางอื่น",
                 min_value=0, max_value=_sp_max_extra,
                 key="wr_sp_extra",
                 help="Score+ Live card ที่อยู่ในมือหรือ Waiting Room จาก turn ก่อน (นอกเหนือจาก Board + Live สำเร็จ)",
@@ -2008,21 +2048,21 @@ else:
             if st.session_state.get(_wr_key, 0) > _wr_max:
                 st.session_state[_wr_key] = _wr_max
 
-        wr_red = st.number_input(color_label(Color.RED), min_value=0, max_value=deck_red, key="wr_red", value=0)
-        wr_blue = st.number_input(color_label(Color.BLUE), min_value=0, max_value=deck_blue, key="wr_blue", value=0)
-        wr_green = st.number_input(color_label(Color.GREEN), min_value=0, max_value=deck_green, key="wr_green", value=0)
-        wr_yellow = st.number_input(color_label(Color.YELLOW), min_value=0, max_value=deck_yellow, key="wr_yellow", value=0)
-        wr_purple = st.number_input(color_label(Color.PURPLE), min_value=0, max_value=deck_purple, key="wr_purple", value=0)
-        wr_pink = st.number_input(color_label(Color.PINK), min_value=0, max_value=deck_pink, key="wr_pink", value=0)
-        wr_all = st.number_input(f"{COLOR_EMOJI[Color.ALL]} All Trigger",
-                                 min_value=0, max_value=deck_all, key="wr_all", value=0)
-        wr_non_plain = st.number_input(
-            "⬛ Non-Trigger (ธรรมดา)",
+        wr_red = _color_number_input(Color.RED, min_value=0, max_value=deck_red, key="wr_red", value=0)
+        wr_blue = _color_number_input(Color.BLUE, min_value=0, max_value=deck_blue, key="wr_blue", value=0)
+        wr_green = _color_number_input(Color.GREEN, min_value=0, max_value=deck_green, key="wr_green", value=0)
+        wr_yellow = _color_number_input(Color.YELLOW, min_value=0, max_value=deck_yellow, key="wr_yellow", value=0)
+        wr_purple = _color_number_input(Color.PURPLE, min_value=0, max_value=deck_purple, key="wr_purple", value=0)
+        wr_pink = _color_number_input(Color.PINK, min_value=0, max_value=deck_pink, key="wr_pink", value=0)
+        wr_all = _icon_number_input(_bh_icon(Color.ALL), "All Trigger",
+                                    min_value=0, max_value=deck_all, key="wr_all", value=0)
+        wr_non_plain = _icon_number_input(
+            icons.bladeheart_none() or "⬛", "Non-Trigger (ธรรมดา)",
             min_value=0, max_value=deck_non_plain, key="wr_non_plain", value=0,
             help="Non-Trigger ธรรมดาที่ออกไปแล้ว (ไม่นับ Score+ Live)",
         )
-        wr_sp_manual = st.number_input(
-            "⭐ Score+ Live ที่ออกจาก Deck",
+        wr_sp_manual = _icon_number_input(
+            _ICON_SCORE, "Score+ Live ที่ออกจาก Deck",
             min_value=0, max_value=deck_sp, key="wr_sp_manual", value=0,
             help="จำนวน Score+ Live card ที่ออกจาก Deck ไปแล้ว",
         )
@@ -2061,17 +2101,17 @@ else:
         st.header("🎭 Stage Members")
         st.caption("Basic Hearts บนเวที + จำนวน Blade รวม")
 
-        blade_count = st.number_input(
-            "🔋 จำนวน Blade รวม (= จำนวนการ์ดที่จะจั่วใน Yell)",
+        blade_count = _icon_number_input(
+            _ICON_BLADE, "จำนวน Blade รวม (= จำนวนการ์ดที่จะจั่วใน Yell)",
             min_value=0, max_value=60, value=0, key="blade_count",
         )
         st.markdown("**Basic Hearts** (หัวใจที่ได้แน่จาก Member บนเวที)")
-        sb_red = st.number_input(color_label(Color.RED), min_value=0, max_value=30, key="sb_red", value=0)
-        sb_blue = st.number_input(color_label(Color.BLUE), min_value=0, max_value=30, key="sb_blue", value=0)
-        sb_green = st.number_input(color_label(Color.GREEN), min_value=0, max_value=30, key="sb_green", value=0)
-        sb_yellow = st.number_input(color_label(Color.YELLOW), min_value=0, max_value=30, key="sb_yellow", value=0)
-        sb_purple = st.number_input(color_label(Color.PURPLE), min_value=0, max_value=30, key="sb_purple", value=0)
-        sb_pink = st.number_input(color_label(Color.PINK), min_value=0, max_value=30, key="sb_pink", value=0)
+        sb_red = _color_number_input(Color.RED, min_value=0, max_value=30, key="sb_red", value=0)
+        sb_blue = _color_number_input(Color.BLUE, min_value=0, max_value=30, key="sb_blue", value=0)
+        sb_green = _color_number_input(Color.GREEN, min_value=0, max_value=30, key="sb_green", value=0)
+        sb_yellow = _color_number_input(Color.YELLOW, min_value=0, max_value=30, key="sb_yellow", value=0)
+        sb_purple = _color_number_input(Color.PURPLE, min_value=0, max_value=30, key="sb_purple", value=0)
+        sb_pink = _color_number_input(Color.PINK, min_value=0, max_value=30, key="sb_pink", value=0)
 
         stage = StageMembers(
             basic_hearts={
@@ -2130,8 +2170,8 @@ else:
             name = st.text_input("ชื่อ Live", key=name_key)
             req = {}
             for color in HEART_COLORS + [Color.GRAY]:
-                n = st.number_input(
-                    color_label(color), min_value=0, max_value=20,
+                n = _color_number_input(
+                    color, min_value=0, max_value=20,
                     key=f"live_{i}_{color.value}",
                 )
                 if n > 0:
@@ -2145,13 +2185,15 @@ for lv in lives:
         combined_req[c] = combined_req.get(c, 0) + n
 if combined_req:
     summary = "  ".join(
-        f"{color_label(c)}: **{n}**"
+        f"{_bh_icon(c)} {COLOR_LABELS_TH.get(c, getattr(c, 'value', str(c)))}: <b>{n}</b>"
         for c, n in combined_req.items()
     )
     _blade_display = st.session_state.get("ov_blade") or st.session_state.get("blade_count") or 0
-    st.info(
-        f"Required hearts รวม: {summary}  |  Total = **{sum(combined_req.values())}**"
-        f"  |  ⚡ Yell (Blade) = **{_blade_display}**"
+    st.markdown(
+        f"<div style='background:rgba(41,182,246,.14);border-radius:8px;padding:8px 12px'>"
+        f"Required hearts รวม: {summary}  |  Total = <b>{sum(combined_req.values())}</b>"
+        f"  |  {_ICON_BLADE} Yell (Blade) = <b>{_blade_display}</b></div>",
+        unsafe_allow_html=True,
     )
 
 st.divider()
@@ -2356,7 +2398,7 @@ if calc_btn:
         # → ได้คะแนน bonus นั้นทันที
         if remaining.score_plus_count > 0:
             st.markdown("---")
-            st.markdown("#### ⭐ Score+")
+            st.markdown(f"#### {_ICON_SCORE} Score+", unsafe_allow_html=True)
             _sp_prob = calculate_score_plus_probability(remaining, blade_count)
             _sp_col1, _sp_col2, _ = st.columns([1, 1, 2])
             with _sp_col1:
@@ -2558,16 +2600,16 @@ if _has_deck:
                     st.caption("🎭 Stage — Blade + Basic Hearts")
                     _ec = st.columns(7)
                     with _ec[0]:
-                        st.number_input(
-                            "⚡ Blade", min_value=0, max_value=60,
+                        _icon_number_input(
+                            _ICON_BLADE, "Blade", min_value=0, max_value=60,
                             value=int(_s.get("blade", 0)),
                             key=f"cmp_blade_{_s['id']}",
                             on_change=_sync_scenario, args=(_s["id"],),
                         )
                     for _j, _c in enumerate(HEART_COLORS):
                         with _ec[_j + 1]:
-                            st.number_input(
-                                color_label(_c), min_value=0, max_value=30,
+                            _color_number_input(
+                                _c, min_value=0, max_value=30,
                                 value=int(_s.get("hearts", {}).get(_c.value, 0)),
                                 key=f"cmp_h_{_s['id']}_{_c.value}",
                                 on_change=_sync_scenario, args=(_s["id"],),
@@ -2578,8 +2620,8 @@ if _has_deck:
                         _lrc = st.columns(7)
                         for _k, _c in enumerate(HEART_COLORS + [Color.GRAY]):
                             with _lrc[_k]:
-                                st.number_input(
-                                    color_label(_c), min_value=0, max_value=20,
+                                _color_number_input(
+                                    _c, min_value=0, max_value=20,
                                     value=int(_lv.get("req", {}).get(_c.value, 0)),
                                     key=f"cmp_lr_{_s['id']}_{_li}_{_c.value}",
                                     on_change=_sync_scenario, args=(_s["id"],),
@@ -2682,11 +2724,11 @@ if _has_deck:
                             "hearts_total": sum(_sc_stage.basic_hearts.values()),
                             "board_total": _sc_stage.blade_count + sum(_sc_stage.basic_hearts.values()),
                             "hearts": " ".join(
-                                f"{COLOR_EMOJI.get(c, c.value)}{_sc_stage.basic_hearts.get(c, 0)}"
+                                f"{_bh_icon(c)}{_sc_stage.basic_hearts.get(c, 0)}"
                                 for c in HEART_COLORS if _sc_stage.basic_hearts.get(c, 0) > 0
                             ) or "—",
                             "req": " ".join(
-                                f"{COLOR_EMOJI.get(c, c.value)}{_req_combined.get(c, 0)}"
+                                f"{_bh_icon(c)}{_req_combined.get(c, 0)}"
                                 for c in HEART_COLORS + [Color.GRAY] if _req_combined.get(c, 0) > 0
                             ) or "—",
                             "exact": _exact,
@@ -2726,13 +2768,13 @@ if _has_deck:
                     return f"{_nm}{_extra}"
 
                 _hdr = ("<tr><th>บอร์ด</th><th>🎵 Live</th><th>🎯 Required</th>"
-                        "<th>🎭 Members (💰Cost)</th><th>⚡Blade</th><th>💗Hearts</th>"
+                        f"<th>🎭 Members ({_ICON_ENERGY}Cost)</th><th>{_ICON_BLADE}Blade</th><th>💗Hearts</th>"
                         "<th>🧮 ผลรวม Board</th><th>Exact %</th><th>Δ Exact</th><th>MC %</th></tr>")
                 _trs = []
                 for r in _results:
                     _is_best = abs(r["exact"] - _best) < 1e-9
                     _mem_html = ", ".join(
-                        _name_chip(m, "mem", f' <small>(💰{m["cost"]})</small>')
+                        _name_chip(m, "mem", f' <small>({_ICON_ENERGY}{m["cost"]})</small>')
                         for m in r.get("members_detail", [])
                     ) or "—"
                     _liv_html = ", ".join(

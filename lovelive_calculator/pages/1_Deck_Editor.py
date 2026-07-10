@@ -22,7 +22,22 @@ if str(_APP_DIR) not in sys.path:
     sys.path.insert(0, str(_APP_DIR))
 
 from models import Color, COLOR_EMOJI, COLOR_LABELS_TH, DeckComposition
-from card_db import DeckCard, get_card_index, get_live_cards, strip_rarity_suffix
+from card_db import (
+    DeckCard, get_card_index, get_live_cards, strip_rarity_suffix, display_names,
+    load_love_points, LOVE_POINT_MAX,
+)
+import icons
+
+
+def _bh_icon(tc) -> str:
+    """icon blade heart ตาม trigger color (None = non-trigger) พร้อม fallback emoji."""
+    s = icons.bladeheart(tc) if tc else icons.bladeheart_none()
+    return s or (COLOR_EMOJI.get(tc, "⬛") if tc else "⬛")
+
+
+_BLADE_ICON = icons.blade() or "⚔️"
+_SCORE_ICON = icons.score() or "⭐"
+_ENERGY_ICON = icons.energy() or "💎"
 from deck_import import DeckEntry, compose_deck_from_entries
 from deck_export import generate_deck_png
 from card_db import fetch_and_save_card_text_th
@@ -224,6 +239,17 @@ def _lookup_card(card_no: str) -> DeckCard | None:
     return idx.get(card_no) or idx.get(strip_rarity_suffix(card_no))
 
 
+@st.cache_resource(show_spinner=False)
+def _love_points_map() -> dict:
+    return load_love_points()
+
+
+def _card_love_points(card_no: str) -> int:
+    """Love Ka point ของการ์ด (match ด้วย base card_no) — 0 ถ้าไม่มี."""
+    m = _love_points_map()
+    return m.get(card_no) or m.get(strip_rarity_suffix(card_no), 0)
+
+
 def _get_all_deck_cards() -> list[DeckCard]:
     """Return unique DeckCard list from card_index (dedup by card_no)."""
     idx: dict = st.session_state.get("card_index", {})
@@ -314,48 +340,129 @@ with col_browser:
     st.markdown("## 🔍 เลือกการ์ด")
 
     # ── Filter controls ──────────────────────────────────────
-    with st.container():
-        search = st.text_input("ค้นหาชื่อการ์ด", placeholder="ชื่อการ์ด / card no", key="editor_search")
+    all_cards = _get_all_deck_cards()
+    _BH_COLORS = [Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.PURPLE, Color.PINK]
+    _all_costs = [c.cost for c in all_cards]
+    cost_min_global = min(_all_costs) if _all_costs else 0
+    cost_max_global = max(_all_costs) if _all_costs else 22
+    _HF_OPTS = ["ทั้งหมด", "1", "2", "3", "4+", "ไม่มี"]
+    bh_options = ["ทั้งหมด"] + _BH_COLORS + [Color.ALL, "__non__"]
 
-        all_cards = _get_all_deck_cards()
+    def _bh_label(x):
+        if x == "ทั้งหมด":
+            return "ทั้งหมด"
+        if x == "__non__":
+            return "⬛ Non"
+        if x == Color.ALL:
+            return f"{COLOR_EMOJI[Color.ALL]} All"
+        return COLOR_EMOJI[x]
 
-        # Card type
-        type_options = ["ทั้งหมด", "member", "live"]
-        type_labels  = {"ทั้งหมด": "ทั้งหมด", "member": "🎭 Member", "live": "🎵 Live"}
-        sel_type = st.selectbox(
-            "ประเภทการ์ด",
-            options=type_options,
-            format_func=lambda x: type_labels.get(x, x),
-            key="editor_filter_type",
-        )
+    # ช่องค้นหาชื่อการ์ด — คงไว้เสมอ (นอกส่วนที่ซ่อน/แสดงได้)
+    search = st.text_input("ค้นหาชื่อการ์ด", placeholder="ชื่อการ์ด / card no", key="editor_search")
 
-        # Group (series)
-        groups = sorted({c.series for c in all_cards if c.series})
-        sel_group = st.selectbox(
-            "กลุ่ม (Series)",
-            options=["ทั้งหมด"] + groups,
-            key="editor_filter_group",
-        )
+    # ปุ่มเปิด/ปิดส่วนตัวกรอง
+    st.session_state.setdefault("_editor_filters_open", True)
+    _flt_open = st.session_state["_editor_filters_open"]
+    if st.button("🔽 ซ่อนตัวกรอง" if _flt_open else "🔼 แสดงตัวกรอง", key="editor_toggle_filters"):
+        st.session_state["_editor_filters_open"] = not _flt_open
+        st.rerun()
 
-        # Unit
-        units = sorted({c.unit for c in all_cards if c.unit})
-        sel_unit = st.selectbox(
-            "ยูนิต",
-            options=["ทั้งหมด"] + units,
-            key="editor_filter_unit",
-        )
+    _snap = st.session_state.get("_editor_flt_snap", {})
 
-        # Cost range
-        all_costs = [c.cost for c in all_cards]
-        cost_min_global = min(all_costs) if all_costs else 0
-        cost_max_global = max(all_costs) if all_costs else 22
-        cost_range = st.slider(
-            "ค่าคอส",
-            min_value=cost_min_global,
-            max_value=cost_max_global,
-            value=(cost_min_global, cost_max_global),
-            key="editor_filter_cost",
-        )
+    if _flt_open:
+        # seed/restore ค่า widget จาก snapshot (widget key อาจถูกลบตอนซ่อน)
+        st.session_state.setdefault("editor_filter_type", _snap.get("type", "ทั้งหมด"))
+        st.session_state.setdefault("editor_filter_group", _snap.get("group", "ทั้งหมด"))
+        st.session_state.setdefault("editor_filter_unit", _snap.get("unit", "ทั้งหมด"))
+        st.session_state.setdefault("editor_filter_bh_pills", _snap.get("bh", "ทั้งหมด"))
+        for _c in _BH_COLORS:
+            st.session_state.setdefault(f"editor_hf_{_c.value}",
+                                        _snap.get("hearts", {}).get(_c.value, "ทั้งหมด"))
+        st.session_state.setdefault("editor_filter_cost",
+                                    tuple(_snap.get("cost") or (cost_min_global, cost_max_global)))
+
+        with st.container():
+            type_options = ["ทั้งหมด", "member", "live"]
+            type_labels  = {"ทั้งหมด": "ทั้งหมด", "member": "🎭 Member", "live": "🎵 Live"}
+            sel_type = st.selectbox("ประเภทการ์ด", options=type_options,
+                                    format_func=lambda x: type_labels.get(x, x),
+                                    key="editor_filter_type")
+
+            groups = sorted({c.series for c in all_cards if c.series})
+            _g_opts = ["ทั้งหมด"] + groups
+            if st.session_state.get("editor_filter_group") not in _g_opts:
+                st.session_state["editor_filter_group"] = "ทั้งหมด"
+            sel_group = st.selectbox("กลุ่ม (Series)", options=_g_opts, key="editor_filter_group")
+
+            units = sorted({c.unit for c in all_cards if c.unit})
+            _u_opts = ["ทั้งหมด"] + units
+            if st.session_state.get("editor_filter_unit") not in _u_opts:
+                st.session_state["editor_filter_unit"] = "ทั้งหมด"
+            sel_unit = st.selectbox("ยูนิต", options=_u_opts, key="editor_filter_unit")
+
+            st.markdown(f"{_BLADE_ICON} **Blade Heart**", unsafe_allow_html=True)
+            # แถวปุ่มไอคอนคลิกได้ (st.pills แสดง PNG ไม่ได้ จึงใช้ปุ่ม + icon แทน) — เหลือแต่ไอคอน
+            _bh_cur = st.session_state.get("editor_filter_bh_pills", "ทั้งหมด") or "ทั้งหมด"
+            _bh_cols = st.columns(len(bh_options))
+            for _i, _opt in enumerate(bh_options):
+                with _bh_cols[_i]:
+                    if _opt == "ทั้งหมด":
+                        # ไม่มีไอคอนประจำ → แสดงข้อความเล็กบรรทัดเดียว (แทนไอคอน) ปุ่มว่าง
+                        _icn = ("<span style='font-size:0.6rem;font-weight:700;"
+                                "white-space:nowrap'>ทั้งหมด</span>")
+                        _lbl = ""
+                    elif _opt == "__non__":
+                        _icn, _lbl = icons.bladeheart_none("1.6rem") or "⬛", ""
+                    else:
+                        _icn, _lbl = icons.bladeheart(_opt, "1.6rem") or COLOR_EMOJI.get(_opt, ""), ""
+                    if _icn:
+                        st.markdown(
+                            f"<div style='text-align:center;height:1.8rem;line-height:1.8rem'>{_icn}</div>",
+                            unsafe_allow_html=True)
+                    if st.button(_lbl, key=f"bhbtn_{_i}", use_container_width=True,
+                                 type="primary" if _bh_cur == _opt else "secondary",
+                                 help=("ทั้งหมด" if _opt == "ทั้งหมด"
+                                       else "Non-Trigger" if _opt == "__non__"
+                                       else "All Trigger" if _opt == Color.ALL
+                                       else COLOR_LABELS_TH.get(_opt, ""))):
+                        st.session_state["editor_filter_bh_pills"] = _opt
+                        st.rerun()
+            sel_bh = st.session_state.get("editor_filter_bh_pills", "ทั้งหมด") or "ทั้งหมด"
+
+            st.markdown("**❤️ จำนวนหัวใจของการ์ด**")
+            heart_filters = {}
+            for _c in _BH_COLORS:
+                _hc = st.columns([1, 9])
+                with _hc[0]:
+                    _hic = icons.bladeheart(_c, "1.5rem") or f"<span style='font-size:1.35rem'>{COLOR_EMOJI[_c]}</span>"
+                    st.markdown(
+                        f"<div style='padding-top:4px;text-align:center'>{_hic}</div>",
+                        unsafe_allow_html=True)
+                with _hc[1]:
+                    heart_filters[_c] = st.pills(
+                        f"heart_{_c.value}", options=_HF_OPTS, selection_mode="single",
+                        key=f"editor_hf_{_c.value}", label_visibility="collapsed") or "ทั้งหมด"
+
+            cost_range = st.slider("ค่าคอส", min_value=cost_min_global,
+                                   max_value=cost_max_global, key="editor_filter_cost")
+
+        # snapshot ให้ยังกรองได้ตอนซ่อน + restore ตอนเปิดกลับ
+        st.session_state["_editor_flt_snap"] = {
+            "type": sel_type, "group": sel_group, "unit": sel_unit, "bh": sel_bh,
+            "hearts": {c.value: heart_filters[c] for c in _BH_COLORS},
+            "cost": list(cost_range),
+        }
+    else:
+        sel_type  = _snap.get("type", "ทั้งหมด")
+        sel_group = _snap.get("group", "ทั้งหมด")
+        sel_unit  = _snap.get("unit", "ทั้งหมด")
+        sel_bh    = _snap.get("bh", "ทั้งหมด")
+        heart_filters = {c: _snap.get("hearts", {}).get(c.value, "ทั้งหมด") for c in _BH_COLORS}
+        _cost = _snap.get("cost")
+        cost_range = tuple(_cost) if _cost else (cost_min_global, cost_max_global)
+        _n_active = (sum(1 for x in (sel_type, sel_group, sel_unit, sel_bh) if x != "ทั้งหมด")
+                     + sum(1 for v in heart_filters.values() if v != "ทั้งหมด"))
+        st.caption(f"🔽 ตัวกรองถูกซ่อนอยู่ ({_n_active} เงื่อนไขกำลังใช้) — กด 'แสดงตัวกรอง' เพื่อแก้ไข")
 
     st.markdown("---")
 
@@ -368,6 +475,31 @@ with col_browser:
         if sel_group != "ทั้งหมด" and card.series != sel_group:
             continue
         if sel_unit != "ทั้งหมด" and card.unit != sel_unit:
+            continue
+        if sel_bh != "ทั้งหมด":
+            if sel_bh == "__non__":
+                if card.trigger_color is not None:
+                    continue
+            elif card.trigger_color != sel_bh:
+                continue
+        # กรองตามจำนวนหัวใจของการ์ด (base_heart) — ต้องผ่านทุกสีที่กำหนด (AND)
+        _hf_skip = False
+        for _c, _hsel in heart_filters.items():
+            if _hsel == "ทั้งหมด":
+                continue
+            _n = card.base_heart.get(_c, 0)
+            if _hsel == "4+":
+                if _n < 4:
+                    _hf_skip = True
+                    break
+            elif _hsel == "ไม่มี":
+                if _n != 0:
+                    _hf_skip = True
+                    break
+            elif _n != int(_hsel):
+                _hf_skip = True
+                break
+        if _hf_skip:
             continue
         if not (cost_range[0] <= card.cost <= cost_range[1]):
             continue
@@ -388,7 +520,8 @@ with col_browser:
     total_pages    = max(1, (total_filtered + PAGE_SIZE - 1) // PAGE_SIZE)
 
     # reset page when filter changes
-    filter_sig = (search, sel_type, sel_group, sel_unit, cost_range)
+    _hf_sig = tuple((c.value, heart_filters[c]) for c in _BH_COLORS)
+    filter_sig = (search, sel_type, sel_group, sel_unit, str(sel_bh), _hf_sig, cost_range)
     if st.session_state.get("_editor_filter_sig") != filter_sig:
         st.session_state["_editor_filter_sig"] = filter_sig
         st.session_state["_editor_page"] = 0
@@ -408,9 +541,9 @@ with col_browser:
         _panel_src  = _card_img_src(_sel_card.image) if _sel_card.image else ""
         _panel_text = (_sel_card.text_th or "").replace("<", "《").replace(">", "》").replace("\n", "<br>")
         _type_label = {"member": "🎭 Member", "live": "🎵 Live", "energy": "🔋 Energy"}.get(_sel_card.card_type, _sel_card.card_type)
-        _tc_badge   = COLOR_EMOJI.get(_sel_card.trigger_color, "⬛") if _sel_card.trigger_color else "⬛"
-        _cost_str   = f"💎 {_sel_card.cost}" if _sel_card.cost else "—"
-        _blade_str  = f"⚔️ {_sel_card.blade}" if _sel_card.blade else ""
+        _tc_badge   = _bh_icon(_sel_card.trigger_color)
+        _cost_str   = f"{_ENERGY_ICON} {_sel_card.cost}" if _sel_card.cost else "—"
+        _blade_str  = f"{_BLADE_ICON} {_sel_card.blade}" if _sel_card.blade else ""
         _is_live = _sel_card.card_type == "live"
         _img_w   = "180px" if not _is_live else "260px"
         _panel_img_tag  = f'<img src="{_panel_src}" style="width:{_img_w};display:block;flex-shrink:0;border-radius:10px 0 0 10px;">' if _panel_src else ""
@@ -419,16 +552,22 @@ with col_browser:
             f'padding:8px 12px 12px;border-top:1px solid #6b2d6b;">{_panel_text}</div>'
         ) if _panel_text else ""
         _panel_blade = f"&nbsp;·&nbsp;{_blade_str}" if _blade_str else ""
+        _sel_pts = _card_love_points(_sel_card.card_no)
+        _panel_points = (f'&nbsp;·&nbsp;<span style="color:#ff6ec7;font-weight:800;">'
+                         f'💠 {_sel_pts} แต้ม</span>') if _sel_pts else ""
         st.markdown(
             f'<div style="background:#2d1040;border:2px solid #e91e8c;border-radius:12px;'
             f'margin-bottom:10px;overflow:hidden;display:flex;align-items:stretch;">'
             f'{_panel_img_tag}'
             f'<div style="flex:1;min-width:0;display:flex;flex-direction:column;">'
             f'<div style="padding:10px 12px 6px;">'
-            f'<div style="font-size:0.92rem;font-weight:700;color:#f0e6ff;margin-bottom:2px;">{_sel_card.name}</div>'
-            f'<div style="font-size:0.72rem;color:#c4a8d4;margin-bottom:4px;">{_sel_card.card_no}</div>'
+            + (lambda _p, _s: (
+                f'<div style="font-size:0.92rem;font-weight:700;color:#f0e6ff;margin-bottom:1px;">{_p}</div>'
+                + (f'<div style="font-size:0.76rem;color:#b088c8;margin-bottom:3px;">{_s}</div>' if _s else "")
+              ))(*display_names(_sel_card.name, getattr(_sel_card, "name_alt", "")))
+            + f'<div style="font-size:0.72rem;color:#c4a8d4;margin-bottom:4px;">{_sel_card.card_no}</div>'
             f'<div style="font-size:0.76rem;color:#c4a8d4;">'
-            f'{_type_label} &nbsp;·&nbsp; {_tc_badge} &nbsp;·&nbsp; {_cost_str}{_panel_blade}'
+            f'{_type_label} &nbsp;·&nbsp; {_tc_badge} &nbsp;·&nbsp; {_cost_str}{_panel_blade}{_panel_points}'
             f'</div></div>'
             f'{_panel_text_div}'
             f'</div>'
@@ -467,7 +606,7 @@ with col_browser:
     def _render_card(card: DeckCard, card_w: int) -> None:
         src = _card_img_src(card.image) if card.image else ""
         tc = card.trigger_color
-        badge = COLOR_EMOJI.get(tc, "⬛") if tc else "⬛"
+        badge = _bh_icon(tc)
         in_deck = ec.get(card.card_no, 0)
         is_selected = st.session_state.get("_selected_card_no") == card.card_no
         border = "3px solid #e91e8c" if (in_deck or is_selected) else "2px solid #6b2d6b"
@@ -480,16 +619,27 @@ with col_browser:
                 f'justify-content:center;color:#c4a8d4;font-size:0.65rem;'
                 f'padding:4px;text-align:center;">{card.card_no}</div>'
             )
-        _short_name = card.name[:18] + ("…" if len(card.name) > 18 else "")
+        _primary, _secondary = display_names(card.name, getattr(card, "name_alt", ""))
+        _short_name = _primary[:18] + ("…" if len(_primary) > 18 else "")
+        _alt_html = (f'<br><span style="color:#9b7bb5;font-size:0.58rem;">'
+                     f'{_secondary[:20] + ("…" if len(_secondary) > 20 else "")}</span>') if _secondary else ""
         _count_html = f'<br><b style="color:#e91e8c">×{in_deck}</b>' if in_deck else ""
+        _pts = _card_love_points(card.card_no)
+        _pts_badge = (
+            f'<div style="position:absolute;top:3px;left:3px;background:#ff2d8e;color:#fff;'
+            f'font-weight:800;font-size:0.66rem;border-radius:50%;width:19px;height:19px;'
+            f'display:flex;align-items:center;justify-content:center;z-index:2;'
+            f'box-shadow:0 1px 3px rgba(0,0,0,0.55);" title="Deck Point">{_pts}</div>'
+        ) if _pts else ""
         st.markdown(
-            f'<div style="border:{border};border-radius:10px;overflow:hidden;'
+            f'<div style="position:relative;border:{border};border-radius:10px;overflow:hidden;'
             f'background:{bg};margin-bottom:2px;max-width:{card_w}px;'
             f'margin-left:auto;margin-right:auto;">'
+            f'{_pts_badge}'
             f'{_img_html}'
             f'<div style="font-size:0.62rem;text-align:center;color:#c4a8d4;'
             f'padding:2px 3px 4px;line-height:1.2;">'
-            f'{badge} {_short_name}{_count_html}'
+            f'{badge} {_short_name}{_alt_html}{_count_html}'
             f'</div></div>',
             unsafe_allow_html=True,
         )
@@ -578,6 +728,14 @@ with col_deck:
     else:
         total_status = f'<span class="summary-warn">⚠️ ขาด {-diff} ใบ</span>'
 
+    # Love Ka Point — รวม points x จำนวนใบ ห้ามเกิน LOVE_POINT_MAX (9)
+    total_love_points = sum(_card_love_points(e["card_no"]) * e["count"] for e in entries)
+    if total_love_points > LOVE_POINT_MAX:
+        love_status = (f'<span class="summary-warn">⚠️ 💠 Deck Point '
+                       f'{total_love_points}/{LOVE_POINT_MAX} (เกิน {total_love_points - LOVE_POINT_MAX}!)</span>')
+    else:
+        love_status = f'<span class="summary-ok">💠 Deck Point {total_love_points}/{LOVE_POINT_MAX}</span>'
+
     st.markdown(
         f'<div class="summary-bar" style="flex-wrap:wrap;gap:0.8rem;">'
         f'<span class="summary-total">{total_cards} / 60</span>'
@@ -586,6 +744,8 @@ with col_deck:
         f'{_rule_status(total_member, 48, "🎭 Member")}'
         f'&nbsp;·&nbsp;'
         f'{_rule_status(total_live, 12, "🎵 Live")}'
+        f'&nbsp;|&nbsp;'
+        f'{love_status}'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -598,6 +758,11 @@ with col_deck:
         rule_errors.append(f"Member ต้องมีพอดี 48 ใบ (ปัจจุบัน {total_member} ใบ)")
     if total_live != 12:
         rule_errors.append(f"Live ต้องมีพอดี 12 ใบ (ปัจจุบัน {total_live} ใบ)")
+    if total_love_points > LOVE_POINT_MAX:
+        rule_errors.append(
+            f"💠 Deck Point รวม {total_love_points} แต้ม เกิน {LOVE_POINT_MAX} "
+            f"(เกิน {total_love_points - LOVE_POINT_MAX} แต้ม) — ลดการ์ดที่มีแต้มลง"
+        )
 
     # ── Trigger summary ───────────────────────────────────────
     _trig_counts: dict[Color | str, int] = {}
@@ -621,12 +786,12 @@ with col_deck:
             _sp_count += e["count"]
 
     _color_chips = [
-        (Color.RED,    COLOR_EMOJI[Color.RED],    "แดง"),
-        (Color.BLUE,   COLOR_EMOJI[Color.BLUE],   "น้ำเงิน"),
-        (Color.GREEN,  COLOR_EMOJI[Color.GREEN],  "เขียว"),
-        (Color.YELLOW, COLOR_EMOJI[Color.YELLOW], "เหลือง"),
-        (Color.PURPLE, COLOR_EMOJI[Color.PURPLE], "ม่วง"),
-        (Color.PINK,   COLOR_EMOJI[Color.PINK],   "ชมพู"),
+        (Color.RED,    _bh_icon(Color.RED),    "แดง"),
+        (Color.BLUE,   _bh_icon(Color.BLUE),   "น้ำเงิน"),
+        (Color.GREEN,  _bh_icon(Color.GREEN),  "เขียว"),
+        (Color.YELLOW, _bh_icon(Color.YELLOW), "เหลือง"),
+        (Color.PURPLE, _bh_icon(Color.PURPLE), "ม่วง"),
+        (Color.PINK,   _bh_icon(Color.PINK),   "ชมพู"),
     ]
     _all_val  = _trig_counts.get(Color.ALL, 0)
     _non_val  = _non_trig - _sp_count
@@ -640,9 +805,9 @@ with col_deck:
         _chip(emoji, label, _trig_counts.get(color, 0))
         for color, emoji, label in _color_chips
     )
-    chips_html += _chip(COLOR_EMOJI[Color.ALL], "All", _all_val)
-    chips_html += _chip("⬛", "Non", _non_val)
-    chips_html += _chip("⭐", "Score+", _sp_count)
+    chips_html += _chip(_bh_icon(Color.ALL), "All", _all_val)
+    chips_html += _chip(icons.bladeheart_none() or "⬛", "Non", _non_val)
+    chips_html += _chip(_SCORE_ICON, "Score+", _sp_count)
 
     st.markdown(
         f'<div class="trigger-grid">'
@@ -775,7 +940,7 @@ with col_deck:
                 count   = e["count"]
                 name    = card.name if card else card_no
                 tc      = card.trigger_color if card else None
-                badge   = COLOR_EMOJI.get(tc, "⬛") if tc else "⬛"
+                badge   = _bh_icon(tc)
                 cost    = card.cost if card else 0
                 cost_str = f"Cost {cost}" if (card and cost > 0) else ""
                 img_src = _card_img_src(card.image) if (card and card.image) else ""
@@ -808,7 +973,7 @@ with col_deck:
                     st.markdown(
                         f'<div style="font-size:0.78rem;font-weight:700;color:#c4a8d4;'
                         f'text-align:center;padding-top:10px;">'
-                        f'{"💎 " + str(cost) if cost_str else "—"}</div>',
+                        f'{_ENERGY_ICON + " " + str(cost) if cost_str else "—"}</div>',
                         unsafe_allow_html=True,
                     )
                 with c3:

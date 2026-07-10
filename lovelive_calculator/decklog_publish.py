@@ -14,6 +14,8 @@ Usage:
 from __future__ import annotations
 
 import json
+import socket
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -40,7 +42,8 @@ class PublishResult:
 def publish_deck_to_decklog(
     entries: List[dict],
     title: str = "My Deck",
-    timeout: float = 15.0,
+    timeout: float = 30.0,
+    attempts: int = 3,
 ) -> PublishResult:
     """
     สร้าง deck ใหม่บน Decklog และคืน PublishResult พร้อม deck_id และ URL
@@ -77,20 +80,51 @@ def publish_deck_to_decklog(
         "Content-Type": "application/json;charset=UTF-8",
     }
 
-    def _post(url: str, payload: object) -> object:
+    def _is_timeout(err: BaseException) -> bool:
+        if isinstance(err, (TimeoutError, socket.timeout)):
+            return True
+        reason = getattr(err, "reason", None)
+        return isinstance(reason, (TimeoutError, socket.timeout))
+
+    def _post(url: str, payload: object, what: str) -> object:
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        req = urllib.request.Request(url, data=data, headers=headers, method="POST")
-        try:
-            with opener.open(req, timeout=timeout) as resp:
-                body = resp.read().decode("utf-8", errors="replace")
-            return json.loads(body) if body.strip() else {}
-        except urllib.error.HTTPError as e:
-            raise DecklogPublishError(f"HTTP {e.code}: {e.url}") from e
-        except Exception as e:
-            raise DecklogPublishError(f"Network error: {e}") from e
+        last_err: BaseException | None = None
+        for i in range(max(1, attempts)):
+            req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+            try:
+                with opener.open(req, timeout=timeout) as resp:
+                    body = resp.read().decode("utf-8", errors="replace")
+                return json.loads(body) if body.strip() else {}
+            except urllib.error.HTTPError as e:
+                raise DecklogPublishError(f"HTTP {e.code} ตอน{what}: {e.url}") from e
+            except urllib.error.URLError as e:
+                last_err = e
+                if not _is_timeout(e):
+                    raise DecklogPublishError(f"เชื่อมต่อ Decklog ไม่ได้ ({what}): {e.reason}") from e
+            except (TimeoutError, socket.timeout) as e:
+                last_err = e
+            except Exception as e:
+                raise DecklogPublishError(f"Network error ({what}): {e}") from e
+            # timeout → รอสั้นๆ แล้วลองใหม่
+            if i < attempts - 1:
+                time.sleep(1.5)
+        raise DecklogPublishError(
+            f"หมดเวลาเชื่อมต่อ Decklog ตอน{what} (timeout {timeout:.0f}s × {attempts} ครั้ง) — "
+            f"เซิร์ฟเวอร์ Decklog อาจช้าหรือไม่ตอบสนอง ลองใหม่อีกครั้งภายหลัง"
+        ) from last_err
+
+    # Step 0: warm-up — โหลดหน้า create ให้ cookie/session พร้อมเหมือน browser (best-effort)
+    try:
+        warm = urllib.request.Request(
+            f"{DECKLOG_BASE}/ja/create?c={GAME_TITLE_ID}", headers={"User-Agent": _UA}
+        )
+        with opener.open(warm, timeout=timeout) as r:
+            r.read()
+    except Exception:
+        pass  # ไม่เป็นไร ขั้นตอนหลักจัดการ error เอง
 
     # Step 1: Get CSRF token
-    token_data = _post(f"{DECKLOG_BASE}/system/app-ja/api/create/", {})
+    token_data = _post(f"{DECKLOG_BASE}/system/app-ja/api/create/", {}, "ขอ token")
     if not isinstance(token_data, dict) or "token_id" not in token_data:
         raise DecklogPublishError(f"ไม่ได้รับ token จาก Decklog: {token_data}")
 
@@ -127,7 +161,7 @@ def publish_deck_to_decklog(
     }
 
     # Step 3: Publish
-    result = _post(f"{DECKLOG_BASE}/system/app-ja/api/publish/{GAME_TITLE_ID}", payload)
+    result = _post(f"{DECKLOG_BASE}/system/app-ja/api/publish/{GAME_TITLE_ID}", payload, "ส่ง deck")
 
     if not isinstance(result, dict):
         raise DecklogPublishError(f"Decklog ตอบกลับผิดรูปแบบ: {result}")

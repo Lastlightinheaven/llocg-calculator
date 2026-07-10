@@ -29,6 +29,7 @@ ASSETS_LIVE_JSON = ASSETS_DIR / "LiveCardTable.json"
 ASSETS_MEMBER_JSON = ASSETS_DIR / "MemberCardTable.json"
 ASSETS_CARD_TEXT_TH = ASSETS_DIR / "CardTextTH.json"
 ASSETS_NAME_MAPPING = ASSETS_DIR / "Name mapping.json"
+ASSETS_LOVE_POINTS = ASSETS_DIR / "LoveKaPoints.json"
 ASSETS_CARD_LIST_DIR = ASSETS_DIR / "Card List"
 ASSETS_IMAGES_LIVE = ASSETS_DIR / "Images" / "Live"
 ASSETS_IMAGES_MEMBER = ASSETS_DIR / "Images" / "Member"
@@ -73,6 +74,20 @@ _CARD_IMAGE_BASE = "https://llofficial-cardgame.com/wordpress/wp-content/images/
 #   - space ก่อน + หรือ ＋ (decklog ส่ง "R +" แต่ DB เก็บ "R＋") → ลบ space
 def normalize_card_no(card_no: str) -> str:
     return card_no.replace(" ＋", "＋").replace("＋", "+").replace(" +", "+")
+
+
+_JP_CHARS = re.compile(r"[぀-ヿ㐀-鿿ｦ-ﾟ]")
+
+
+def display_names(name: str, name_alt: str = "") -> Tuple[str, str]:
+    """
+    คืน (english_primary, japanese_secondary) — จัดให้ 'อังกฤษเป็นหลักเสมอ'.
+    Member: name=EN, name_alt=JP → (EN, JP). Song: name=JP, name_alt=EN → สลับเป็น (EN, JP).
+    ถ้าไม่มี name_alt คืน (name, "").
+    """
+    if name_alt and _JP_CHARS.search(name or "") and not _JP_CHARS.search(name_alt):
+        return name_alt, name          # name เป็นญี่ปุ่น (เพลง) → เอา alt (อังกฤษ) ขึ้นก่อน
+    return name, name_alt
 
 
 # Cache: card_no (normalized) → image URL, loaded from Assets/Card List CSVs
@@ -168,6 +183,7 @@ class DeckCard:
     cost: int = 0
     image: str = ""
     text_th: str = ""                    # card effect text (Thai) from llocg-th.vercel.app
+    name_alt: str = ""                   # ชื่ออีกภาษา (เช่น อังกฤษ) จาก Assets/CardNameMap.json
 
     def to_json(self) -> dict:
         return {
@@ -182,6 +198,7 @@ class DeckCard:
             "cost": self.cost,
             "image": self.image,
             "text_th": self.text_th,
+            "name_alt": self.name_alt,
         }
 
     @classmethod
@@ -199,6 +216,7 @@ class DeckCard:
             cost=int(d.get("cost") or 0),
             image=d.get("image", "") or "",
             text_th=d.get("text_th", "") or "",
+            name_alt=d.get("name_alt", "") or "",
         )
 
 
@@ -217,6 +235,7 @@ class LiveCard:
     series: str = ""
     product: str = ""
     image: str = ""
+    name_alt: str = ""                   # ชื่ออีกภาษา (เช่น อังกฤษ) จาก Assets/CardNameMap.json
 
     def to_requirement(self) -> LiveRequirement:
         """แปลงเป็น LiveRequirement ที่ใช้ใน GameState ได้เลย."""
@@ -242,6 +261,7 @@ class LiveCard:
             "series": self.series,
             "product": self.product,
             "image": self.image,
+            "name_alt": self.name_alt,
         }
 
     @classmethod
@@ -260,6 +280,7 @@ class LiveCard:
             series=d.get("series", "") or "",
             product=d.get("product", "") or "",
             image=d.get("image", "") or "",
+            name_alt=d.get("name_alt", "") or "",
         )
 
 
@@ -463,8 +484,10 @@ def load_from_assets_live() -> List[LiveCard]:
         _bh = obj.get("BladeHeart", "") or ""
         _trigger_color, score_plus = _parse_assets_bladeheart(_bh)
 
+        _live_name = obj.get("Name", "") or ""
+        _live_alt = _translate_name(_live_name)   # ชื่ออังกฤษจาก Name mapping.json (ถ้ามี)
         cards.append(LiveCard(
-            name=obj.get("Name", "") or "",
+            name=_live_name,
             card_no=card_no_full,
             required_hearts=required,
             score=_coerce_int(obj.get("Score", 0)),
@@ -473,6 +496,7 @@ def load_from_assets_live() -> List[LiveCard]:
             series=obj.get("Group", "") or "",
             product=obj.get("Contain", "") or "",
             image=img_path,
+            name_alt=(_live_alt if _live_alt and _live_alt != _live_name else ""),
         ))
     return cards
 
@@ -517,8 +541,10 @@ def load_from_assets_members() -> List[DeckCard]:
                 if n > 0:
                     base_heart[color] = n
 
+            _name_jp = obj.get("Name", "") or ""
+            _name_en = _translate_name(_name_jp)
             card = DeckCard(
-                name=_translate_name(obj.get("Name", "") or ""),
+                name=_name_en,
                 card_no=card_no_full,
                 card_type=card_type,
                 trigger_color=trigger_color,
@@ -528,6 +554,8 @@ def load_from_assets_members() -> List[DeckCard]:
                 unit=obj.get("Unit", "") or "",
                 cost=_coerce_int(obj.get("Cost", 0)),
                 image=img_path,
+                # เก็บชื่อญี่ปุ่นเดิมไว้ (ไม่ทิ้ง) เพื่อแสดงคู่กับอังกฤษ
+                name_alt=(_name_jp if _name_jp and _name_jp != _name_en else ""),
             )
 
             # Register ด้วย full card_no (เช่น PL!SP-bp1-005-P)
@@ -809,6 +837,30 @@ def get_live_cards(force_refresh: bool = False) -> Tuple[List[LiveCard], str]:
     if cards:
         return cards, "snapshot"
     return [], "empty"
+
+
+def load_love_points(path: Path = ASSETS_LOVE_POINTS) -> Dict[str, int]:
+    """
+    โหลด Love Ka Point จาก Assets/LoveKaPoints.json → {base_card_no: points}.
+    การ์ดที่ไม่อยู่ในไฟล์ = 0 แต้ม. รวมใน Deck ห้ามเกิน 9 (นับ points x จำนวนใบ).
+    """
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+    raw = data.get("points", {}) if isinstance(data, dict) else {}
+    out: Dict[str, int] = {}
+    for k, v in raw.items():
+        try:
+            out[normalize_card_no(k)] = int(v)
+        except (ValueError, TypeError):
+            continue
+    return out
+
+
+LOVE_POINT_MAX = 9   # แต้มรวมใน Deck ห้ามเกิน
 
 
 def load_card_text_th(path: Path = ASSETS_CARD_TEXT_TH) -> Dict[str, str]:
