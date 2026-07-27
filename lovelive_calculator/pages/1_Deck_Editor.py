@@ -24,8 +24,10 @@ if str(_APP_DIR) not in sys.path:
 from models import Color, COLOR_EMOJI, COLOR_LABELS_TH, DeckComposition
 from card_db import (
     DeckCard, get_card_index, get_live_cards, strip_rarity_suffix, display_names,
-    load_love_points, LOVE_POINT_MAX,
+    load_love_points, LOVE_POINT_MAX, load_keyword_map,
 )
+import html as _html
+import re as _re
 import icons
 
 
@@ -38,6 +40,71 @@ def _bh_icon(tc) -> str:
 _BLADE_ICON = icons.blade() or "⚔️"
 _SCORE_ICON = icons.score() or "⭐"
 _ENERGY_ICON = icons.energy() or "💎"
+
+# keyword → {icon, hint} จาก Assets/keyword_map.json (โหลดครั้งเดียว)
+_KEYWORD_MAP = load_keyword_map()
+# จับ token ที่ครอบด้วย [ ] หรือ < > ทีละตัว
+_TOKEN_RE = _re.compile(r"[<\[]([^<>\[\]]{1,24})[>\]]")
+
+# token สัญลักษณ์ (heart/blade/E/score) → icon inline โดยตรง (ไม่มี tooltip, ไม่มีข้อความ)
+# key เป็น lower-case; heart ใช้ icon ชุด heart_<สี> (grey → heart_none เพราะไม่มีไฟล์ heart_gray)
+_HEART_SIZE = "1.15em"
+_SYMBOL_ICON = {
+    "e": lambda: icons.energy("1.15em"),
+    "blade": lambda: icons.blade("1.15em"),
+    "score": lambda: icons.score("1.15em"),
+    "redheart": lambda: icons.icon_img("heart_red", _HEART_SIZE),
+    "blueheart": lambda: icons.icon_img("heart_blue", _HEART_SIZE),
+    "greenheart": lambda: icons.icon_img("heart_green", _HEART_SIZE),
+    "yellowheart": lambda: icons.icon_img("heart_yellow", _HEART_SIZE),
+    "purpleheart": lambda: icons.icon_img("heart_purple", _HEART_SIZE),
+    "pinkheart": lambda: icons.icon_img("heart_pink", _HEART_SIZE),
+    "greyheart": lambda: icons.icon_img("heart_none", _HEART_SIZE),
+    "grayheart": lambda: icons.icon_img("heart_none", _HEART_SIZE),
+    "allheart": lambda: icons.icon_img("heart_all", _HEART_SIZE),
+    "heart_all": lambda: icons.icon_img("heart_all", _HEART_SIZE),
+}
+
+
+def render_card_text(text: str) -> str:
+    """แปลง text_th เป็น HTML สำหรับ st.markdown(unsafe_allow_html):
+      - [keyword] ที่รู้จัก → icon + ข้อความไทย + tooltip hint
+      - token สัญลักษณ์ (<E>, <blade>, <pinkheart>, <score>) → icon inline
+      - token อื่น (<Nijigasaki>, <Shibuya Kanon>) → คงข้อความ escape ไว้ในวงเล็บ
+      - ข้อความปกติ → escape กัน HTML injection, \\n → <br>
+    """
+    if not text:
+        return ""
+
+    def _repl(m: "_re.Match") -> str:
+        raw = m.group(0)          # เช่น "[เมื่อเริ่ม Live]" หรือ "<blade>"
+        key = m.group(1).strip()
+        info = _KEYWORD_MAP.get(key)
+        if info:
+            icon_html = icons.icon_img(info["icon"], "1.25em") if info.get("icon") else ""
+            hint = _html.escape(info.get("hint", ""), quote=True)
+            label = _html.escape(key)
+            inner = (f'{icon_html}<span style="font-weight:700;color:#ffd6f5;">'
+                     f'[{label}]</span>')
+            # ครอบด้วย span ที่มี tooltip (title) — hover เห็นความหมาย
+            return (f'<span title="{hint}" style="cursor:help;'
+                    f'border-bottom:1px dotted #b088c8;white-space:nowrap;">{inner}</span>')
+        # token สัญลักษณ์ → icon inline (fallback เป็นข้อความ escape ถ้าไม่มีไฟล์ icon)
+        sym = _SYMBOL_ICON.get(key.lower())
+        if sym:
+            return sym() or _html.escape(raw)
+        # ไม่ใช่ token ที่รู้จัก (ชื่อ unit/member) → คงวงเล็บเดิม (escape)
+        return _html.escape(raw)
+
+    # escape ส่วนที่อยู่นอก token ก่อน แล้วค่อยแทน token
+    # ทำโดย split ตาม token: ส่วน text ระหว่าง token ต้อง escape, ตัว token ให้ _repl จัดการ
+    out, last = [], 0
+    for m in _TOKEN_RE.finditer(text):
+        out.append(_html.escape(text[last:m.start()]))
+        out.append(_repl(m))
+        last = m.end()
+    out.append(_html.escape(text[last:]))
+    return "".join(out).replace("\n", "<br>")
 from deck_import import DeckEntry, compose_deck_from_entries
 from deck_export import generate_deck_png
 from card_db import fetch_and_save_card_text_th
@@ -346,6 +413,9 @@ with col_browser:
     cost_min_global = min(_all_costs) if _all_costs else 0
     cost_max_global = max(_all_costs) if _all_costs else 22
     _HF_OPTS = ["ทั้งหมด", "1", "2", "3", "4+", "ไม่มี"]
+    # Blade: ตัวเลือกทีละค่า ถึงจำนวน Blade สูงสุดที่มีในเกมจริง (ขยายเองถ้ามีการ์ดใหม่)
+    blade_max_global = max((c.blade for c in all_cards), default=0)
+    _BLADE_OPTS = ["ทั้งหมด", "ไม่มี"] + [str(n) for n in range(1, blade_max_global + 1)]
     bh_options = ["ทั้งหมด"] + _BH_COLORS + [Color.ALL, "__non__"]
 
     def _bh_label(x):
@@ -386,6 +456,33 @@ with col_browser:
         key="editor_ability",
         help="ค้นตรงตัวจากข้อความความสามารถ (ภาษาไทย) — คั่นหลายคำด้วยเว้นวรรค = ต้องมีครบทุกคำ",
     )
+
+    # ── ปุ่มลัด keyword timing: icon คลิกได้ (กดค้นทันที / กดซ้ำ = ล้าง) ──
+    # icon แสดงผ่าน markdown เหนือปุ่มว่าง (st.button ใส่ PNG ใน label ไม่ได้) — แพทเทิร์นเดียวกับ Blade Heart
+    _KW_QUICK = [
+        ("เมื่อเข้าสู่ Stage", "text_entry"),
+        ("เมื่อเริ่ม Live", "text_live_start"),
+        ("เมื่อ Live สำเร็จ", "text_live_success"),
+        ("ต่อเนื่อง", "text_static"),
+        ("ใช้งาน", "text_activate"),
+        ("AUTO", "text_auto"),
+    ]
+    st.caption("🏷️ Keyword")
+    _kw_cols = st.columns(len(_KW_QUICK))
+    for _i, (_kw, _icon) in enumerate(_KW_QUICK):
+        with _kw_cols[_i]:
+            _active = (ability or "").strip() == _kw
+            _icn = icons.icon_img(_icon, "1.7rem") or f"<span style='font-size:0.6rem'>{_kw}</span>"
+            st.markdown(
+                f"<div style='text-align:center;height:1.9rem;line-height:1.9rem;"
+                f"opacity:{'1' if _active else '0.85'}'>{_icn}</div>",
+                unsafe_allow_html=True)
+            if st.button("", key=f"kwbtn_{_i}", use_container_width=True,
+                         type="primary" if _active else "secondary", help=_kw):
+                # กดปุ่มที่ active อยู่ = ล้างคำค้น, ไม่งั้น = ตั้งค่าเป็น keyword นั้น
+                st.session_state["_editor_ability_pending"] = "" if _active else _kw
+                st.rerun()
+
     # คำแนะนำแบบ autocomplete — โผล่เฉพาะตอนพิมพ์ และกรองตามสิ่งที่พิมพ์
     _ab_cur = (ability or "").strip().lower()
     if _ab_cur:
@@ -487,6 +584,11 @@ with col_browser:
                         f"heart_{_c.value}", options=_HF_OPTS, selection_mode="single",
                         key=f"editor_hf_{_c.value}", label_visibility="collapsed") or "ทั้งหมด"
 
+            st.markdown(f"{_BLADE_ICON} **จำนวน Blade ของการ์ด**", unsafe_allow_html=True)
+            blade_filter = st.pills(
+                "blade_count", options=_BLADE_OPTS, selection_mode="single",
+                key="editor_blade_filter", label_visibility="collapsed") or "ทั้งหมด"
+
             cost_range = st.slider("ค่าคอส", min_value=cost_min_global,
                                    max_value=cost_max_global, key="editor_filter_cost")
 
@@ -494,6 +596,7 @@ with col_browser:
         st.session_state["_editor_flt_snap"] = {
             "type": sel_type, "group": sel_group, "unit": sel_unit, "bh": sel_bh,
             "hearts": {c.value: heart_filters[c] for c in _BH_COLORS},
+            "blade": blade_filter,
             "cost": list(cost_range),
         }
     else:
@@ -502,10 +605,12 @@ with col_browser:
         sel_unit  = _snap.get("unit", "ทั้งหมด")
         sel_bh    = _snap.get("bh", "ทั้งหมด")
         heart_filters = {c: _snap.get("hearts", {}).get(c.value, "ทั้งหมด") for c in _BH_COLORS}
+        blade_filter = _snap.get("blade", "ทั้งหมด")
         _cost = _snap.get("cost")
         cost_range = tuple(_cost) if _cost else (cost_min_global, cost_max_global)
         _n_active = (sum(1 for x in (sel_type, sel_group, sel_unit, sel_bh) if x != "ทั้งหมด")
-                     + sum(1 for v in heart_filters.values() if v != "ทั้งหมด"))
+                     + sum(1 for v in heart_filters.values() if v != "ทั้งหมด")
+                     + (1 if blade_filter != "ทั้งหมด" else 0))
         st.caption(f"🔽 ตัวกรองถูกซ่อนอยู่ ({_n_active} เงื่อนไขกำลังใช้) — กด 'แสดงตัวกรอง' เพื่อแก้ไข")
 
     st.markdown("---")
@@ -563,6 +668,11 @@ with col_browser:
                 break
         if _hf_skip:
             continue
+        # กรองตามจำนวน Blade ของการ์ด (เลือกทีละค่าถึงจำนวนสูงสุดในเกม)
+        if blade_filter != "ทั้งหมด":
+            _want = 0 if blade_filter == "ไม่มี" else int(blade_filter)
+            if card.blade != _want:
+                continue
         if not (cost_range[0] <= card.cost <= cost_range[1]):
             continue
         if sq and sq not in card.name.lower() and sq not in card.card_no.lower():
@@ -585,7 +695,7 @@ with col_browser:
 
     # reset page when filter changes
     _hf_sig = tuple((c.value, heart_filters[c]) for c in _BH_COLORS)
-    filter_sig = (search, aq, sel_type, sel_group, sel_unit, str(sel_bh), _hf_sig, cost_range)
+    filter_sig = (search, aq, sel_type, sel_group, sel_unit, str(sel_bh), _hf_sig, blade_filter, cost_range)
     if st.session_state.get("_editor_filter_sig") != filter_sig:
         st.session_state["_editor_filter_sig"] = filter_sig
         st.session_state["_editor_page"] = 0
@@ -603,7 +713,7 @@ with col_browser:
     _sel_card: DeckCard | None = _lookup_card(_sel) if _sel else None
     if _sel_card:
         _panel_src  = _card_img_src(_sel_card.image) if _sel_card.image else ""
-        _panel_text = (_sel_card.text_th or "").replace("<", "《").replace(">", "》").replace("\n", "<br>")
+        _panel_text = render_card_text(_sel_card.text_th or "")
         _type_label = {"member": "🎭 Member", "live": "🎵 Live", "energy": "🔋 Energy"}.get(_sel_card.card_type, _sel_card.card_type)
         _tc_badge   = _bh_icon(_sel_card.trigger_color)
         _cost_str   = f"{_ENERGY_ICON} {_sel_card.cost}" if _sel_card.cost else "—"

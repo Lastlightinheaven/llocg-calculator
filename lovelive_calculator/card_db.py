@@ -31,6 +31,7 @@ ASSETS_CARD_TEXT_TH = ASSETS_DIR / "CardTextTH.json"
 ASSETS_CARD_TEXT_FIX = ASSETS_DIR / "CardTextFix.json"
 ASSETS_NAME_MAPPING = ASSETS_DIR / "Name mapping.json"
 ASSETS_LOVE_POINTS = ASSETS_DIR / "LoveKaPoints.json"
+ASSETS_KEYWORD_MAP = ASSETS_DIR / "keyword_map.json"
 ASSETS_CARD_LIST_DIR = ASSETS_DIR / "Card List"
 ASSETS_IMAGES_LIVE = ASSETS_DIR / "Images" / "Live"
 ASSETS_IMAGES_MEMBER = ASSETS_DIR / "Images" / "Member"
@@ -862,6 +863,23 @@ def load_love_points(path: Path = ASSETS_LOVE_POINTS) -> Dict[str, int]:
 
 
 LOVE_POINT_MAX = 9   # แต้มรวมใน Deck ห้ามเกิน
+
+
+def load_keyword_map(path: Path = ASSETS_KEYWORD_MAP) -> Dict[str, Dict[str, str]]:
+    """
+    โหลด keyword display map จาก Assets/keyword_map.json
+    → {canonical_keyword: {"icon": ชื่อไฟล์, "hint": ความหมาย}}.
+
+    ใช้ตอน render text_th ใน Deck Editor — keyword ที่ไม่อยู่ในไฟล์แสดงเป็นข้อความธรรมดา.
+    """
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+    kw = data.get("keywords", {})
+    return {k: v for k, v in kw.items() if isinstance(v, dict)}
 
 
 def load_card_text_fix(path: Path = ASSETS_CARD_TEXT_FIX) -> Dict[str, str]:

@@ -42,3 +42,6 @@ lovelive_calculator/tools/export_effects_review.py
 
 # ไฟล์ทำงาน Excel กรอกข้อความการ์ด — เก็บ local ไม่ push
 lovelive_calculator/tools/*.xlsx
+
+# working file ของ keyword source — เก็บเฉพาะ PDF, ไม่เอา xlsx เข้า repo
+LL_Keyword.xlsx
