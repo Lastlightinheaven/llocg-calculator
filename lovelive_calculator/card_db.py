@@ -28,6 +28,7 @@ ASSETS_DIR = Path(__file__).parent / "Assets"
 ASSETS_LIVE_JSON = ASSETS_DIR / "LiveCardTable.json"
 ASSETS_MEMBER_JSON = ASSETS_DIR / "MemberCardTable.json"
 ASSETS_CARD_TEXT_TH = ASSETS_DIR / "CardTextTH.json"
+ASSETS_CARD_TEXT_FIX = ASSETS_DIR / "CardTextFix.json"
 ASSETS_NAME_MAPPING = ASSETS_DIR / "Name mapping.json"
 ASSETS_LOVE_POINTS = ASSETS_DIR / "LoveKaPoints.json"
 ASSETS_CARD_LIST_DIR = ASSETS_DIR / "Card List"
@@ -863,10 +864,12 @@ def load_love_points(path: Path = ASSETS_LOVE_POINTS) -> Dict[str, int]:
 LOVE_POINT_MAX = 9   # แต้มรวมใน Deck ห้ามเกิน
 
 
-def load_card_text_th(path: Path = ASSETS_CARD_TEXT_TH) -> Dict[str, str]:
+def load_card_text_fix(path: Path = ASSETS_CARD_TEXT_FIX) -> Dict[str, str]:
     """
-    โหลด Thai card text จาก Assets/CardTextTH.json → {card_no: text_th}.
-    key เป็น card_no ที่ normalize แล้ว (full rarity variant จาก llocg-th).
+    โหลด overlay แก้ข้อความการ์ดที่สะกดผิด จาก Assets/CardTextFix.json → {card_no: text}.
+
+    ต้องแยกไฟล์เพราะ fetch_and_save_card_text_th() เขียนทับ CardTextTH.json ทั้งไฟล์
+    → ถ้าแก้ลงไฟล์นั้นตรงๆ จะหายทันทีที่มีคน refresh ข้อมูลการ์ด
     """
     if not path.exists():
         return {}
@@ -874,8 +877,27 @@ def load_card_text_th(path: Path = ASSETS_CARD_TEXT_TH) -> Dict[str, str]:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return {}
-    raw: Dict[str, str] = data.get("cards", {})
+    raw: Dict[str, str] = data.get("fixes", {})
     return {normalize_card_no(k): v for k, v in raw.items() if v}
+
+
+def load_card_text_th(path: Path = ASSETS_CARD_TEXT_TH) -> Dict[str, str]:
+    """
+    โหลด Thai card text จาก Assets/CardTextTH.json → {card_no: text_th}
+    แล้ว merge overlay จาก Assets/CardTextFix.json ทับ (overlay ชนะเสมอ).
+
+    key เป็น card_no ที่ normalize แล้ว (full rarity variant จาก llocg-th).
+    """
+    out: Dict[str, str] = {}
+    if path.exists():
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            raw: Dict[str, str] = data.get("cards", {})
+            out = {normalize_card_no(k): v for k, v in raw.items() if v}
+        except (json.JSONDecodeError, OSError):
+            out = {}
+    out.update(load_card_text_fix())
+    return out
 
 
 def fetch_and_save_card_text_th(timeout: float = 20.0) -> int:

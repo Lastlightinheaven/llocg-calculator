@@ -25,4 +25,20 @@ lovelive_calculator/plans/
 lovelive_calculator/plan_storage.py
 lovelive_calculator/turn_planner.py
 lovelive_calculator/pages/2_Turn_Planner.py
+lovelive_calculator/card_effects.py
+lovelive_calculator/effects_schema.py
+lovelive_calculator/test_card_effects.py
+lovelive_calculator/test_plan_storage_v3.py
+lovelive_calculator/test_turn_planner_apptest.py
+lovelive_calculator/test_turn_planner_effects.py
 test_urls.py
+
+# ไฟล์รีวิวผลสกัด effect (สร้างใหม่ได้ด้วย tools/export_effects_review.py)
+lovelive_calculator/effects_review.csv
+lovelive_calculator/tools/export_effects_review.py
+
+# ไฟล์ temp / lock ของ Excel (~$...) — เกิดตอนเปิดไฟล์ค้าง
+~$*.xlsx
+
+# ไฟล์ทำงาน Excel กรอกข้อความการ์ด — เก็บ local ไม่ push
+lovelive_calculator/tools/*.xlsx

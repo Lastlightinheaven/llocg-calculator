@@ -360,6 +360,50 @@ with col_browser:
     # ช่องค้นหาชื่อการ์ด — คงไว้เสมอ (นอกส่วนที่ซ่อน/แสดงได้)
     search = st.text_input("ค้นหาชื่อการ์ด", placeholder="ชื่อการ์ด / card no", key="editor_search")
 
+    # ── ค้นจากความสามารถ (text_th) ──
+    # คำค้นแนะนำ: label → คำจริงในการ์ด (บางคำมีหลายสำนวน ใช้ ' | ' คั่น = ตรงอย่างใดอย่างหนึ่ง)
+    _ABILITY_CHIPS = {
+        "เมื่อลง": "เมื่อเข้าสู่สนาม | เมื่อเข้าสู่ Stage",
+        "เริ่ม Live": "เมื่อเริ่ม Live",
+        "Live สำเร็จ": "เมื่อ Live สำเร็จ",
+        "ใช้งาน": "ใช้งาน",
+        "จั่ว": "จั่ว",
+        "ทิ้งการ์ด": "ทิ้งการ์ด | ทิ้งมือ",
+        "Wait": "Wait",
+        "Baton": "Baton",
+        "Position Change": "Position Change | ย้าย Area",
+        "Formation Change": "Formation Change",
+        "ได้ Blade": "ได้รับ <blade | ได้รับ (Blade",
+        "Score+": "Score +",
+        "Energy": "Energy",
+        "ห้องพัก": "ห้องพัก",
+    }
+    # ปุ่มแนะนำเขียนค่าลง _editor_ability_pending → apply ก่อนสร้าง widget (Streamlit gotcha)
+    if "_editor_ability_pending" in st.session_state:
+        st.session_state["editor_ability"] = st.session_state.pop("_editor_ability_pending")
+    ability = st.text_input(
+        "ค้นจากความสามารถการ์ด", placeholder="เช่น จั่ว, Wait, Position Change, ได้รับ Blade",
+        key="editor_ability",
+        help="ค้นตรงตัวจากข้อความความสามารถ (ภาษาไทย) — คั่นหลายคำด้วยเว้นวรรค = ต้องมีครบทุกคำ",
+    )
+    # คำแนะนำแบบ autocomplete — โผล่เฉพาะตอนพิมพ์ และกรองตามสิ่งที่พิมพ์
+    _ab_cur = (ability or "").strip().lower()
+    if _ab_cur:
+        # การพิมพ์แบบ AND: พิจารณาเฉพาะคำสุดท้ายที่กำลังพิมพ์
+        _typed = _ab_cur.split()[-1] if _ab_cur.split() else ""
+        _suggest = [(lbl, term) for lbl, term in _ABILITY_CHIPS.items()
+                    if _typed and (_typed in lbl.lower() or _typed in term.lower())
+                    and term.lower() != _ab_cur]
+        if _suggest:
+            st.caption("💡 แนะนำ:")
+            _sug_cols = st.columns(min(len(_suggest), 6))
+            for _i, (_lbl, _term) in enumerate(_suggest[:6]):
+                with _sug_cols[_i]:
+                    if st.button(_lbl, key=f"absug_{_i}", use_container_width=True,
+                                 help=f"ค้น: {_term}"):
+                        st.session_state["_editor_ability_pending"] = _term
+                        st.rerun()
+
     # ปุ่มเปิด/ปิดส่วนตัวกรอง
     st.session_state.setdefault("_editor_filters_open", True)
     _flt_open = st.session_state["_editor_filters_open"]
@@ -469,6 +513,24 @@ with col_browser:
     # ── Apply filters ─────────────────────────────────────────
     filtered: list[DeckCard] = []
     sq = search.strip().lower()
+
+    # ค้นความสามารถ: แยกด้วย ' | ' เป็น OR-group ก่อน แล้วภายในแต่ละ group แยกช่องว่าง = AND
+    #   "จั่ว Wait"              → ต้องมีทั้ง 'จั่ว' และ 'wait'
+    #   "ทิ้งการ์ด | ทิ้งมือ"     → มีอย่างใดอย่างหนึ่งก็พอ (ชิปหลายสำนวน)
+    aq = (ability or "").strip().lower()
+    ability_groups: list[list[str]] = []      # OR ระหว่าง group, AND ภายใน group
+    if aq:
+        for _grp in aq.split("|"):
+            _terms = _grp.split()
+            if _terms:
+                ability_groups.append(_terms)
+
+    def _ability_match(txt: str) -> bool:
+        if not ability_groups:
+            return True
+        low = txt.lower()
+        return any(all(term in low for term in grp) for grp in ability_groups)
+
     for card in all_cards:
         if sel_type != "ทั้งหมด" and card.card_type != sel_type:
             continue
@@ -505,6 +567,8 @@ with col_browser:
             continue
         if sq and sq not in card.name.lower() and sq not in card.card_no.lower():
             continue
+        if ability_groups and not _ability_match(card.text_th or ""):
+            continue
         filtered.append(card)
 
     # sort: type order then card_no
@@ -521,7 +585,7 @@ with col_browser:
 
     # reset page when filter changes
     _hf_sig = tuple((c.value, heart_filters[c]) for c in _BH_COLORS)
-    filter_sig = (search, sel_type, sel_group, sel_unit, str(sel_bh), _hf_sig, cost_range)
+    filter_sig = (search, aq, sel_type, sel_group, sel_unit, str(sel_bh), _hf_sig, cost_range)
     if st.session_state.get("_editor_filter_sig") != filter_sig:
         st.session_state["_editor_filter_sig"] = filter_sig
         st.session_state["_editor_page"] = 0
