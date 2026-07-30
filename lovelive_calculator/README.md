@@ -130,11 +130,10 @@ lovelive_calculator/
 ├── models.py               # Data classes (Color, DeckComposition, GameState ฯลฯ)
 ├── probability.py          # Hypergeometric math + Non-Trigger sensitivity
 ├── simulator.py            # Monte Carlo simulation
-├── card_db.py              # Card database loader (Assets → snapshot → web)
+├── card_db.py              # Card database loader (Assets → snapshot)
 ├── deck_import.py          # Decklog import / deck composition
 ├── deck_export.py          # Export Deck เป็นรูป PNG
 ├── decklog_publish.py      # สร้าง Deck บน Decklog
-├── build_card_snapshot.py  # สร้าง snapshot การ์ดจากเว็บ (offline fallback)
 ├── Assets/                 # ฐานข้อมูลการ์ด (JSON) + รูป (Card List CSV)
 ├── requirements.txt
 ├── README.md

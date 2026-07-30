@@ -24,7 +24,7 @@ if str(_APP_DIR) not in sys.path:
 from models import Color, COLOR_EMOJI, COLOR_LABELS_TH, DeckComposition
 from card_db import (
     DeckCard, get_card_index, get_live_cards, strip_rarity_suffix, display_names,
-    load_love_points, LOVE_POINT_MAX, load_keyword_map,
+    load_love_points, LOVE_POINT_MAX, load_keyword_map, card_images_by_rarity,
 )
 import html as _html
 import re as _re
@@ -107,7 +107,6 @@ def render_card_text(text: str) -> str:
     return "".join(out).replace("\n", "<br>")
 from deck_import import DeckEntry, compose_deck_from_entries
 from deck_export import generate_deck_png
-from card_db import fetch_and_save_card_text_th
 
 # ---------------------------------------------------------------------------
 # Page config
@@ -243,6 +242,32 @@ div[data-testid="stSelectbox"] div[data-baseweb="select"] {
       border-radius: 6px; padding: 2px 8px; font-size: 0.82rem; font-weight: 700; }
 .tc-zero { opacity: 0.35; }
 .tc-val { color: var(--llocg-pink); min-width: 1.4em; text-align: right; }
+
+/* ปุ่มสลับ rarity ใน dialog — เล็ก minimal (override ปุ่มพิ้งค์ใหญ่ default)
+   marker .rarity-switch ตามด้วย stHorizontalBlock ที่มีปุ่ม */
+.rarity-switch + div [data-testid="stButton"] > button {
+    padding: 1px 8px !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    min-height: 0 !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    background: #1a0a2e !important;
+    color: var(--llocg-text-sub) !important;
+    border: 1px solid var(--llocg-border) !important;
+}
+.rarity-switch + div [data-testid="stButton"] > button:hover {
+    border-color: var(--llocg-pink) !important;
+    color: var(--llocg-text) !important;
+    background: #1a0a2e !important;
+}
+/* rarity ที่เลือกอยู่ (primary) — เน้นด้วยขอบ/พื้นพิ้งค์จางๆ */
+.rarity-switch + div [data-testid="stButton"] > button[kind="primary"] {
+    background: rgba(233,30,140,0.18) !important;
+    color: #ff6ec7 !important;
+    border-color: var(--llocg-pink) !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -394,6 +419,117 @@ if "editor_entries" not in st.session_state:
 # ---------------------------------------------------------------------------
 st.markdown("# ✏️ Deck Editor")
 st.caption("สร้างหรือแก้ไข Deck — กด Apply เพื่อส่งกลับ Calculator หลัก")
+
+
+# ---------------------------------------------------------------------------
+# Card detail dialog (modal) — เปิดตอนกดแว่นขยาย 🔍
+# ---------------------------------------------------------------------------
+_HEART_TILE_ICON = {
+    Color.RED: "heart_red", Color.BLUE: "heart_blue", Color.GREEN: "heart_green",
+    Color.YELLOW: "heart_yellow", Color.PURPLE: "heart_purple", Color.PINK: "heart_pink",
+    Color.GRAY: "heart_none", Color.ALL: "heart_all",
+}
+
+
+def _rarity_of(card_no: str) -> str:
+    """ดึงส่วน rarity ท้าย card_no (เช่น PL!N-bp1-002-SEC → SEC)."""
+    base = strip_rarity_suffix(card_no)
+    return card_no[len(base) + 1:] if card_no.startswith(base + "-") else card_no
+
+
+@st.dialog(" ", width="large")
+def _show_card_dialog(card: DeckCard) -> None:
+    """แสดงรายละเอียดการ์ดเป็น modal กลางจอ — รูปด้านบน (สลับ rarity ได้), stat tiles, ความสามารถ."""
+    _text = render_card_text(card.text_th or "")
+    _type_label = {"member": "🎭 Member", "live": "🎵 Live",
+                   "energy": "🔋 Energy"}.get(card.card_type, card.card_type)
+    _primary, _secondary = display_names(card.name, getattr(card, "name_alt", ""))
+    _pts = _card_love_points(card.card_no)
+
+    # รูปทุก rarity ของ base card เดียวกัน (P / P+ / R+ / SEC ...)
+    _variants = card_images_by_rarity(card.card_no)  # [(full_card_no, image_url), ...]
+    _sel_key = f"_dlg_rarity_{strip_rarity_suffix(card.card_no)}"
+    # default = rarity ของการ์ดที่กด (ถ้าอยู่ในลิสต์) ไม่งั้นตัวแรก
+    if _sel_key not in st.session_state:
+        st.session_state[_sel_key] = next(
+            (cn for cn, _ in _variants if cn == card.card_no),
+            _variants[0][0] if _variants else card.card_no,
+        )
+    _cur_no = st.session_state[_sel_key]
+    _cur_img = next((img for cn, img in _variants if cn == _cur_no), card.image)
+    _src = _card_img_src(_cur_img) if _cur_img else ""
+
+    _img_w = "230px" if card.card_type == "live" else "165px"
+    _img_tag = (f'<img src="{_src}" style="width:{_img_w};max-width:70%;display:block;'
+                f'margin:0 auto;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.5);">'
+                if _src else "")
+
+    # meta row (type · card_no ตาม rarity ที่เลือก)
+    _meta = f'{_type_label} &nbsp;·&nbsp; {_cur_no}'
+
+    # stat tiles: cost / blade / hearts
+    def _tile(inner: str, label: str) -> str:
+        return (f'<div style="flex:1;background:#1a0a2e;border:1px solid #6b2d6b;'
+                f'border-radius:10px;padding:8px 6px;text-align:center;">'
+                f'<div style="font-size:1.1rem;font-weight:800;color:#f0e6ff;'
+                f'display:flex;align-items:center;justify-content:center;gap:4px;'
+                f'flex-wrap:wrap;">{inner}</div>'
+                f'<div style="font-size:0.66rem;color:#b088c8;margin-top:2px;">{label}</div>'
+                f'</div>')
+
+    _tiles = []
+    _tiles.append(_tile(f'{_ENERGY_ICON} {card.cost}' if card.cost else "—", "Energy"))
+    if card.blade:
+        _tiles.append(_tile(f'{_BLADE_ICON} {card.blade}', "เบลด"))
+    if card.base_heart:
+        _hearts = " ".join(
+            f'{icons.icon_img(_HEART_TILE_ICON.get(_c, "heart_none"), "1.1em")}{_n}'
+            for _c, _n in card.base_heart.items() if _n
+        )
+        if _hearts:
+            _tiles.append(_tile(_hearts, "หัวใจ"))
+    if _pts:
+        _tiles.append(_tile(f'💠 {_pts}', "Deck Point"))
+
+    st.markdown(
+        f'<div style="text-align:center;">'
+        f'{_img_tag}'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    # ── ปุ่มสลับ rarity (แสดงเฉพาะเมื่อมีมากกว่า 1 แบบ) — เล็ก minimal, ชิดกลาง ──
+    if len(_variants) > 1:
+        st.markdown('<div class="rarity-switch"></div>', unsafe_allow_html=True)
+        # ปุ่มอยู่คอลัมน์แคบตรงกลาง (spacer ซ้าย/ขวา) → ปุ่มไม่ยืดเต็มความกว้าง dialog
+        _n = len(_variants)
+        _cols = st.columns([3] + [1] * _n + [3])
+        for _i, (_vno, _vimg) in enumerate(_variants):
+            with _cols[_i + 1]:
+                _active = _vno == _cur_no
+                if st.button(_rarity_of(_vno), key=f"rar_{_sel_key}_{_i}",
+                             use_container_width=True,
+                             type="primary" if _active else "secondary"):
+                    st.session_state[_sel_key] = _vno
+                    st.rerun(scope="fragment")
+
+    st.markdown(
+        f'<div style="text-align:center;">'
+        f'<div style="font-size:1.15rem;font-weight:800;color:#f0e6ff;margin-top:6px;">{_primary}</div>'
+        + (f'<div style="font-size:0.82rem;color:#b088c8;">{_secondary}</div>' if _secondary else "")
+        + f'<div style="font-size:0.74rem;color:#c4a8d4;margin-top:3px;">{_meta}</div>'
+        f'</div>'
+        f'<div style="display:flex;gap:8px;margin:14px 0 4px;">{"".join(_tiles)}</div>',
+        unsafe_allow_html=True,
+    )
+    if _text:
+        st.markdown(
+            f'<div style="font-size:1.02rem;color:#f0e6ff;line-height:1.7;'
+            f'background:#1a0a2e;border:1px solid #6b2d6b;border-radius:10px;'
+            f'padding:12px 14px;margin-top:6px;">{_text}</div>',
+            unsafe_allow_html=True,
+        )
+
 
 # ---------------------------------------------------------------------------
 # Layout: Left = browser, Right = deck list
@@ -708,50 +844,6 @@ with col_browser:
 
     st.caption(f"แสดง {page_start+1}–{page_start+len(page_cards)} จาก {total_filtered:,} การ์ด (หน้า {cur_page+1}/{total_pages})")
 
-    # ── Card detail panel (locked on click) ──────────────────
-    _sel = st.session_state.get("_selected_card_no")
-    _sel_card: DeckCard | None = _lookup_card(_sel) if _sel else None
-    if _sel_card:
-        _panel_src  = _card_img_src(_sel_card.image) if _sel_card.image else ""
-        _panel_text = render_card_text(_sel_card.text_th or "")
-        _type_label = {"member": "🎭 Member", "live": "🎵 Live", "energy": "🔋 Energy"}.get(_sel_card.card_type, _sel_card.card_type)
-        _tc_badge   = _bh_icon(_sel_card.trigger_color)
-        _cost_str   = f"{_ENERGY_ICON} {_sel_card.cost}" if _sel_card.cost else "—"
-        _blade_str  = f"{_BLADE_ICON} {_sel_card.blade}" if _sel_card.blade else ""
-        _is_live = _sel_card.card_type == "live"
-        _img_w   = "180px" if not _is_live else "260px"
-        _panel_img_tag  = f'<img src="{_panel_src}" style="width:{_img_w};display:block;flex-shrink:0;border-radius:10px 0 0 10px;">' if _panel_src else ""
-        _panel_text_div = (
-            f'<div style="font-size:1.06rem;color:#f0e6ff;line-height:1.7;'
-            f'padding:8px 12px 12px;border-top:1px solid #6b2d6b;">{_panel_text}</div>'
-        ) if _panel_text else ""
-        _panel_blade = f"&nbsp;·&nbsp;{_blade_str}" if _blade_str else ""
-        _sel_pts = _card_love_points(_sel_card.card_no)
-        _panel_points = (f'&nbsp;·&nbsp;<span style="color:#ff6ec7;font-weight:800;">'
-                         f'💠 {_sel_pts} แต้ม</span>') if _sel_pts else ""
-        st.markdown(
-            f'<div style="background:#2d1040;border:2px solid #e91e8c;border-radius:12px;'
-            f'margin-bottom:10px;overflow:hidden;display:flex;align-items:stretch;">'
-            f'{_panel_img_tag}'
-            f'<div style="flex:1;min-width:0;display:flex;flex-direction:column;">'
-            f'<div style="padding:10px 12px 6px;">'
-            + (lambda _p, _s: (
-                f'<div style="font-size:0.92rem;font-weight:700;color:#f0e6ff;margin-bottom:1px;">{_p}</div>'
-                + (f'<div style="font-size:0.76rem;color:#b088c8;margin-bottom:3px;">{_s}</div>' if _s else "")
-              ))(*display_names(_sel_card.name, getattr(_sel_card, "name_alt", "")))
-            + f'<div style="font-size:0.72rem;color:#c4a8d4;margin-bottom:4px;">{_sel_card.card_no}</div>'
-            f'<div style="font-size:0.76rem;color:#c4a8d4;">'
-            f'{_type_label} &nbsp;·&nbsp; {_tc_badge} &nbsp;·&nbsp; {_cost_str}{_panel_blade}{_panel_points}'
-            f'</div></div>'
-            f'{_panel_text_div}'
-            f'</div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-        if st.button("✕ ปิด", key="close_card_panel", use_container_width=False):
-            st.session_state.pop("_selected_card_no", None)
-            st.rerun()
-
     st.markdown("---")
 
     # ── Card grid (current page only) ─────────────────────────
@@ -782,9 +874,8 @@ with col_browser:
         tc = card.trigger_color
         badge = _bh_icon(tc)
         in_deck = ec.get(card.card_no, 0)
-        is_selected = st.session_state.get("_selected_card_no") == card.card_no
-        border = "3px solid #e91e8c" if (in_deck or is_selected) else "2px solid #6b2d6b"
-        bg = "#3d1858" if is_selected else "#2d1040"
+        border = "3px solid #e91e8c" if in_deck else "2px solid #6b2d6b"
+        bg = "#2d1040"
         if src:
             _img_html = f'<img src="{src}" style="width:100%;display:block;">'
         else:
@@ -824,13 +915,8 @@ with col_browser:
                 key=f"sel_{card.card_no}_{cur_page}",
                 use_container_width=True,
                 help="ดูรายละเอียด",
-                type="primary" if is_selected else "secondary",
             ):
-                if is_selected:
-                    st.session_state.pop("_selected_card_no", None)
-                else:
-                    st.session_state["_selected_card_no"] = card.card_no
-                st.rerun()
+                _show_card_dialog(card)
         with c2:
             if st.button("＋", key=f"add_{card.card_no}_{cur_page}", use_container_width=True, help="เพิ่มเข้า Deck"):
                 _add_card(card.card_no)
@@ -942,6 +1028,7 @@ with col_deck:
     _trig_counts: dict[Color | str, int] = {}
     _non_trig = 0
     _sp_count = 0
+    _draw_count = 0
     live_lut = {c.card_no: c for c in st.session_state.get("live_cards", [])}
     for e in entries:
         card = _lookup_card(e["card_no"])
@@ -958,6 +1045,9 @@ with col_deck:
         lc = live_lut.get(card.card_no) or live_lut.get(strip_rarity_suffix(card.card_no))
         if lc and lc.score_plus > 0:
             _sp_count += e["count"]
+        # Draw trigger — assets เก็บ special_heart เป็น "blue:1, draw:1" ฯลฯ (draw มากับสี)
+        if lc and "draw" in (lc.special_heart or ""):
+            _draw_count += e["count"]
 
     _color_chips = [
         (Color.RED,    _bh_icon(Color.RED),    "แดง"),
@@ -982,6 +1072,7 @@ with col_deck:
     chips_html += _chip(_bh_icon(Color.ALL), "All", _all_val)
     chips_html += _chip(icons.bladeheart_none() or "⬛", "Non", _non_val)
     chips_html += _chip(_SCORE_ICON, "Score+", _sp_count)
+    chips_html += _chip(icons.draw() or "🃏", "Draw", _draw_count)
 
     st.markdown(
         f'<div class="trigger-grid">'

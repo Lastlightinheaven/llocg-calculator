@@ -18,8 +18,7 @@ from models import (
 from probability import calculate_live_success_probability, calculate_score_plus_probability, compute_non_trigger_sensitivity
 from simulator import simulate_live
 from card_db import (
-    get_live_cards, fetch_live_cards_from_web, save_snapshot,
-    get_card_index, fetch_card_index_from_web, save_card_index, strip_rarity_suffix,
+    get_live_cards, get_card_index, strip_rarity_suffix,
 )
 from deck_import import (
     DecklogError, compose_deck_from_entries,
@@ -1582,30 +1581,8 @@ with st.sidebar:
     st.subheader("📖 Live Card Database")
     _n_cards = len(st.session_state.get("live_cards", []))
     _src = st.session_state.get("live_cards_source", "empty")
-    _src_label = {"web": "🌐 live", "snapshot": "💾 snapshot", "empty": "❌ ว่าง"}.get(_src, _src)
+    _src_label = {"assets": "📁 Assets", "snapshot": "💾 snapshot", "empty": "❌ ว่าง"}.get(_src, _src)
     st.caption(f"โหลด **{_n_cards}** ใบ · ที่มา: {_src_label}")
-    if st.button("🔄 Refresh from DB", use_container_width=True,
-                 help="ดึง Live + card index ล่าสุดจาก llocg-th.vercel.app (fallback → snapshot ถ้าพัง)"):
-        with st.spinner("กำลังดึงข้อมูลจากเว็บ..."):
-            try:
-                fresh = fetch_live_cards_from_web()
-                save_snapshot(fresh)
-                st.session_state.live_cards = fresh
-                st.session_state.live_cards_source = "web"
-                idx_cards = fetch_card_index_from_web()
-                save_card_index(idx_cards)
-                st.session_state.card_index = {c.card_no: c for c in idx_cards}
-                st.session_state.card_index_source = "web"
-                st.success(
-                    f"อัปเดตเรียบร้อย: Live {len(fresh)} ใบ · index {len(idx_cards)} ใบ"
-                )
-            except Exception as e:  # noqa: BLE001
-                st.error(f"ดึงไม่สำเร็จ: {e}")
-                st.caption("ใช้ snapshot เดิมต่อไป")
-    st.markdown(
-        "[🔗 เปิดเว็บต้นทาง →](https://llocg-th.vercel.app/cards)",
-        unsafe_allow_html=False,
-    )
 
 
 # ==========================================================================

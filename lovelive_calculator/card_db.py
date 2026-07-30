@@ -1,17 +1,15 @@
 """
-Live card database — Assets-first + web-scrape fallback.
+Live card database — Assets-first.
 
 Strategy (ลำดับความสำคัญ):
   1. Assets/LiveCardTable.json + Assets/MemberCardTable.json = primary source
      (ข้อมูลครบถ้วน, Score+ ถูกต้อง, รูปการ์ด local)
   2. bundled snapshot data/live_cards.json = fallback ถ้าไม่มี Assets
-  3. fetch_live_cards_from_web() = optional refresh จาก llocg-th.vercel.app
 """
 from __future__ import annotations
 
 import json
 import re
-import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -19,8 +17,6 @@ from typing import Dict, List, Optional, Tuple
 from models import Color, LiveRequirement
 
 
-CARDS_PAGE_URL = "https://llocg-th.vercel.app/cards"
-CHUNK_URL_TEMPLATE = "https://llocg-th.vercel.app/_next/static/chunks/{name}.js"
 SNAPSHOT_PATH = Path(__file__).parent / "data" / "live_cards.json"
 CARD_INDEX_PATH = Path(__file__).parent / "data" / "cards_index.json"
 
@@ -128,6 +124,36 @@ def card_no_to_image_url(card_no: str) -> str:
     return img_map.get(cn, "")
 
 
+# Cache: base card_no → [(full_card_no, image_url)] ทุก rarity (เรียงตามลำดับใน CSV)
+_card_rarity_images: Optional[Dict[str, List[Tuple[str, str]]]] = None
+
+
+def card_images_by_rarity(card_no: str) -> List[Tuple[str, str]]:
+    """
+    คืนรูปการ์ดทุก rarity ของ base เดียวกัน เป็น [(full_card_no, image_url), ...].
+
+    เช่น card_no = "PL!N-bp1-002-P" → คืนรูปของ -P, -P+, -R+, -SEC ทั้งหมด
+    (base card เดียวกันแต่คนละ rarity ใช้รูปคนละใบ). ใช้ base card_no (ไม่มี rarity)
+    เป็น key — dedup รูปซ้ำ, คงลำดับที่เจอใน CSV.
+    """
+    global _card_rarity_images
+    if _card_rarity_images is None:
+        idx: Dict[str, List[Tuple[str, str]]] = {}
+        seen: Dict[str, set] = {}
+        for full_cn, img in _load_card_list_image_map().items():
+            base = strip_rarity_suffix(full_cn)
+            if base not in idx:
+                idx[base] = []
+                seen[base] = set()
+            if img not in seen[base]:
+                idx[base].append((full_cn, img))
+                seen[base].add(img)
+        _card_rarity_images = idx
+
+    base = strip_rarity_suffix(normalize_card_no(card_no))
+    return list(_card_rarity_images.get(base, []))
+
+
 def strip_rarity_suffix(card_no: str) -> str:
     """
     ตัด rarity suffix ออกจาก card_no ของ decklog เพื่อ lookup ใน Assets.
@@ -142,14 +168,7 @@ def strip_rarity_suffix(card_no: str) -> str:
     m = _re.match(r'^(.+)-([A-Za-z0-9+]{1,5})$', card_no)
     return m.group(1) if m else card_no
 
-# card_type ในข้อมูลต้นทางเป็นภาษาญี่ปุ่น — แมพเป็น tag สั้นใน snapshot
-_CARD_TYPE_MAP: Dict[str, str] = {
-    "ライブ": "live",
-    "メンバー": "member",
-    "エネルギー": "energy",
-}
-
-# เว็บต้นทางใช้ "grey", models.py ใช้ Color.GRAY — แมพตรงๆ
+# ข้อมูล heart เก็บสีเป็น "grey", models.py ใช้ Color.GRAY — แมพตรงๆ
 _WEB_TO_COLOR: Dict[str, Color] = {
     "red": Color.RED,
     "blue": Color.BLUE,
@@ -184,7 +203,7 @@ class DeckCard:
     unit: str = ""
     cost: int = 0
     image: str = ""
-    text_th: str = ""                    # card effect text (Thai) from llocg-th.vercel.app
+    text_th: str = ""                    # card effect text (Thai) จาก Assets/CardTextTH.json
     name_alt: str = ""                   # ชื่ออีกภาษา (เช่น อังกฤษ) จาก Assets/CardNameMap.json
 
     def to_json(self) -> dict:
@@ -575,197 +594,9 @@ def load_from_assets_members() -> List[DeckCard]:
     return list(result.values())
 
 
-def _js_str_to_json(s: str) -> str:
-    """แปลง JS string escapes ที่ไม่ valid ใน JSON ให้ใช้งานได้.
-    - \\' → '   (JS อนุญาต แต่ JSON ไม่อนุญาต)
-    - \\" ที่ embed อยู่ใน string → "  (double-escaped quotes ใน JS bundle)
-    """
-    return s.replace("\\'", "'").replace('\\"', '"')
-
-
-def _iter_card_objects(js: str):
-    """
-    Iterate raw card JSON objects from a Next.js bundle.
-
-    yields dict for each parseable card object (no type filter).
-
-    ความท้าทาย: JS bundle ใช้ escape sequences ที่ไม่ valid ใน JSON เช่น \\' และ \\"
-    ซึ่งทำให้ json.loads() fail โดยตรง — แก้ด้วย _js_str_to_json() ก่อน parse
-    """
-    # anchor บน card_no แทน card_name เพื่อหลีกเลี่ยงกรณีชื่อการ์ดมี \" ฝังอยู่
-    pattern = re.compile(
-        r'\{(?P<body>[^{}]*?"card_no"\s*:\s*"(?P<card_no>[^"]+)"[^{}]*?)\}',
-        re.DOTALL,
-    )
-    for m in pattern.finditer(js):
-        body = m.group("body")
-        if '"card_type"' not in body or '"card_name"' not in body:
-            continue
-        full = "{" + body + "}"
-        try:
-            yield json.loads(_js_str_to_json(full))
-        except json.JSONDecodeError:
-            continue
-
-
-def _extract_live_cards_from_bundle(js: str) -> List[LiveCard]:
-    """Extract Live-card entries from a downloaded Next.js chunk."""
-    cards: List[LiveCard] = []
-    seen = set()
-    for obj in _iter_card_objects(js):
-        if obj.get("card_type") != "ライブ":
-            continue
-        card_no = normalize_card_no(obj.get("card_no", "") or "")
-        if not card_no or card_no in seen:
-            continue
-        seen.add(card_no)
-        _sh = obj.get("special_heart", "") or ""
-        _tc = obj.get("text_card", "") or ""
-        cards.append(LiveCard(
-            name=obj.get("card_name", "") or "",
-            card_no=card_no,
-            required_hearts=parse_required_heart(obj.get("required_heart", "") or ""),
-            score=_coerce_int(obj.get("score")),
-            score_plus=_parse_score_plus(_sh, _tc),
-            special_heart=_sh,
-            series=obj.get("series", "") or "",
-            product=obj.get("product", "") or "",
-            image=obj.get("image", "") or "",
-        ))
-    return cards
-
-
-def _extract_deck_cards_from_bundle(js: str) -> List[DeckCard]:
-    """
-    Extract ALL deck-usable cards (Member + Live + Energy) from a bundle.
-    ใช้สำหรับสร้าง card index เพื่อ lookup trigger color ตอน import deck.
-    """
-    cards: List[DeckCard] = []
-    seen = set()
-    for obj in _iter_card_objects(js):
-        jp_type = obj.get("card_type", "")
-        tag = _CARD_TYPE_MAP.get(jp_type)
-        if tag is None:
-            continue
-        card_no = normalize_card_no(obj.get("card_no", "") or "")
-        if not card_no or card_no in seen:
-            continue
-        seen.add(card_no)
-        cards.append(DeckCard(
-            name=obj.get("card_name", "") or "",
-            card_no=card_no,
-            card_type=tag,
-            trigger_color=parse_blade_heart(obj.get("blade_heart", "") or ""),
-            blade=_coerce_int(obj.get("blade")),
-            base_heart=parse_required_heart(obj.get("base_heart", "") or ""),
-            series=obj.get("series", "") or "",
-            image=obj.get("image", "") or "",
-        ))
-    return cards
-
-
 # ==========================================================================
-# Web fetch
+# Snapshot I/O — โหลด fallback อย่างเดียว (ไม่มี save เพราะไม่ดึงจากเว็บแล้ว)
 # ==========================================================================
-def _http_get(url: str, timeout: float = 15.0) -> str:
-    req = urllib.request.Request(
-        url,
-        headers={"User-Agent": "llocg-calculator/1.0 (+https://github.com/)"},
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return resp.read().decode("utf-8", errors="replace")
-
-
-def _find_chunk_urls(cards_html: str) -> List[str]:
-    """Find all /_next/static/chunks/*.js URLs referenced from the /cards page."""
-    names = re.findall(r'/_next/static/chunks/([a-f0-9]{16})\.js', cards_html)
-    # dedup preserving order
-    seen = set()
-    out = []
-    for n in names:
-        if n not in seen:
-            seen.add(n)
-            out.append(CHUNK_URL_TEMPLATE.format(name=n))
-    return out
-
-
-def _fetch_all_chunks(timeout: float) -> List[str]:
-    """GET /cards page แล้วดึง JS ของทุก chunk คืนเป็น list of JS strings."""
-    html = _http_get(CARDS_PAGE_URL, timeout=timeout)
-    chunk_urls = _find_chunk_urls(html)
-    if not chunk_urls:
-        raise RuntimeError("ไม่พบ JS chunks ในหน้า /cards — layout ของเว็บอาจเปลี่ยน")
-    chunks = []
-    last_error: Optional[Exception] = None
-    for url in chunk_urls:
-        try:
-            chunks.append(_http_get(url, timeout=timeout))
-        except Exception as e:  # noqa: BLE001
-            last_error = e
-    if not chunks and last_error:
-        raise RuntimeError(f"ดึง JS chunks ไม่สำเร็จ: {last_error}")
-    return chunks
-
-
-def fetch_live_cards_from_web(timeout: float = 20.0) -> List[LiveCard]:
-    """
-    Scrape https://llocg-th.vercel.app/cards for Live card definitions.
-    ดึงทุก JS chunk แล้วรวมผล เพื่อให้ได้การ์ดครบทุกใบแม้ข้อมูลกระจายอยู่หลาย chunk.
-
-    Raises:
-        RuntimeError: if no Live cards can be extracted (network error / layout change).
-    """
-    chunks = _fetch_all_chunks(timeout)
-    all_cards: List[LiveCard] = []
-    seen: set = set()
-    for js in chunks:
-        if '"card_type":"ライブ"' not in js:
-            continue
-        for card in _extract_live_cards_from_bundle(js):
-            if card.card_no not in seen:
-                seen.add(card.card_no)
-                all_cards.append(card)
-    if not all_cards:
-        raise RuntimeError("สแกน JS chunks ครบแล้วแต่ไม่เจอการ์ด Live — format ของเว็บอาจเปลี่ยน")
-    return all_cards
-
-
-def fetch_card_index_from_web(timeout: float = 20.0) -> List[DeckCard]:
-    """
-    Scrape https://llocg-th.vercel.app/cards for ALL deck-usable cards.
-    ดึงทุก JS chunk แล้วรวมผล เพื่อให้ได้การ์ดครบทุกใบ (Member/Live/Energy).
-    """
-    chunks = _fetch_all_chunks(timeout)
-    all_cards: List[DeckCard] = []
-    seen: set = set()
-    for js in chunks:
-        if '"card_type"' not in js:
-            continue
-        for card in _extract_deck_cards_from_bundle(js):
-            if card.card_no not in seen:
-                seen.add(card.card_no)
-                all_cards.append(card)
-    if not all_cards:
-        raise RuntimeError("สแกน JS chunks ครบแล้วแต่ไม่เจอการ์ด — format ของเว็บอาจเปลี่ยน")
-    return all_cards
-
-
-# ==========================================================================
-# Snapshot I/O
-# ==========================================================================
-def save_snapshot(cards: List[LiveCard], path: Path = SNAPSHOT_PATH) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    payload = {
-        "source": CARDS_PAGE_URL,
-        "count": len(cards),
-        "cards": [c.to_json() for c in cards],
-    }
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
-
-
 def load_snapshot(path: Path = SNAPSHOT_PATH) -> List[LiveCard]:
     if not path.exists():
         return []
@@ -774,19 +605,6 @@ def load_snapshot(path: Path = SNAPSHOT_PATH) -> List[LiveCard]:
     except json.JSONDecodeError:
         return []
     return [LiveCard.from_json(d) for d in data.get("cards", [])]
-
-
-def save_card_index(cards: List[DeckCard], path: Path = CARD_INDEX_PATH) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    payload = {
-        "source": CARDS_PAGE_URL,
-        "count": len(cards),
-        "cards": [c.to_json() for c in cards],
-    }
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
 
 
 def load_card_index(path: Path = CARD_INDEX_PATH) -> Dict[str, DeckCard]:
@@ -814,27 +632,17 @@ def get_live_cards(force_refresh: bool = False) -> Tuple[List[LiveCard], str]:
     """
     Return (cards, source_label). source_label is one of:
         'assets'  — loaded from Assets/LiveCardTable.json (primary)
-        'web'     — scraped from llocg-th.vercel.app (force_refresh=True)
         'snapshot'— loaded from data/live_cards.json (fallback)
         'empty'   — all sources failed
 
-    Priority: Assets → (web if force_refresh) → snapshot
+    Priority: Assets → snapshot. (force_refresh คงไว้เพื่อ compat เฉยๆ — ไม่มี web แล้ว)
     """
     # 1. Assets — primary source (ข้อมูลครบ, Score+ ถูกต้อง)
     cards = load_from_assets_live()
     if cards:
         return cards, "assets"
 
-    # 2. Web refresh (เฉพาะเมื่อขอ)
-    if force_refresh:
-        try:
-            cards = fetch_live_cards_from_web()
-            if cards:
-                return cards, "web"
-        except Exception:  # noqa: BLE001
-            pass
-
-    # 3. Snapshot fallback
+    # 2. Snapshot fallback
     cards = load_snapshot()
     if cards:
         return cards, "snapshot"
@@ -886,8 +694,8 @@ def load_card_text_fix(path: Path = ASSETS_CARD_TEXT_FIX) -> Dict[str, str]:
     """
     โหลด overlay แก้ข้อความการ์ดที่สะกดผิด จาก Assets/CardTextFix.json → {card_no: text}.
 
-    ต้องแยกไฟล์เพราะ fetch_and_save_card_text_th() เขียนทับ CardTextTH.json ทั้งไฟล์
-    → ถ้าแก้ลงไฟล์นั้นตรงๆ จะหายทันทีที่มีคน refresh ข้อมูลการ์ด
+    แยกเป็นไฟล์ overlay เพื่อให้แก้ text ทับ CardTextTH.json ได้โดยไม่ต้องแก้ไฟล์หลัก
+    (CardTextFix ชนะเสมอตอน merge — ดู load_card_text_th).
     """
     if not path.exists():
         return {}
@@ -904,7 +712,7 @@ def load_card_text_th(path: Path = ASSETS_CARD_TEXT_TH) -> Dict[str, str]:
     โหลด Thai card text จาก Assets/CardTextTH.json → {card_no: text_th}
     แล้ว merge overlay จาก Assets/CardTextFix.json ทับ (overlay ชนะเสมอ).
 
-    key เป็น card_no ที่ normalize แล้ว (full rarity variant จาก llocg-th).
+    key เป็น card_no ที่ normalize แล้ว (full rarity variant).
     """
     out: Dict[str, str] = {}
     if path.exists():
@@ -918,51 +726,11 @@ def load_card_text_th(path: Path = ASSETS_CARD_TEXT_TH) -> Dict[str, str]:
     return out
 
 
-def fetch_and_save_card_text_th(timeout: float = 20.0) -> int:
-    """
-    ดึง text_card ภาษาไทยจาก llocg-th.vercel.app แล้วบันทึกลง Assets/CardTextTH.json.
-    คืนจำนวนการ์ดที่มี text.
-    """
-    import re as _re
-    chunks = _fetch_all_chunks(timeout)
-    results: Dict[str, str] = {}
-    pattern = _re.compile(r'\{[^{}]*"card_no"[^{}]*\}')
-    for js in chunks:
-        if '"card_no"' not in js:
-            continue
-        for m in pattern.finditer(js):
-            obj_str = m.group()
-            if '"card_type"' not in obj_str or '"card_name"' not in obj_str:
-                continue
-            try:
-                obj = json.loads(obj_str.replace("\\'", "'"))
-            except json.JSONDecodeError:
-                continue
-            card_no = normalize_card_no(obj.get("card_no", "") or "")
-            text = obj.get("text_card", "") or ""
-            if isinstance(text, list):
-                text = "\n".join(t for t in text if t)
-            text = text.strip()
-            if card_no and text:
-                results[card_no] = text
-
-    payload = {
-        "source": CARDS_PAGE_URL,
-        "count": len(results),
-        "cards": results,
-    }
-    ASSETS_CARD_TEXT_TH.parent.mkdir(parents=True, exist_ok=True)
-    ASSETS_CARD_TEXT_TH.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
-    return len(results)
-
-
 def _build_assets_index(cards: List[DeckCard]) -> Dict[str, DeckCard]:
     """
     สร้าง card index จาก Assets cards พร้อม alias หลาย key ต่อการ์ดหนึ่งใบ
     และ inject text_th จาก CardTextTH.json — ใช้ base card_no (ไม่มี rarity) เป็น key
-    เพราะ llocg-th เก็บ text ที่ rarity หลัก (-P) แต่เราต้องการ fallback ทุก variant
+    เพราะ text เก็บที่ rarity หลัก (-P) แต่เราต้องการ fallback ทุก variant
     """
     text_map = load_card_text_th()
 
@@ -990,23 +758,14 @@ def get_card_index(force_refresh: bool = False) -> Tuple[Dict[str, DeckCard], st
     """
     Return (index, source_label) — index keyed by card_no.
 
-    Priority: Assets → (web if force_refresh) → snapshot
+    Priority: Assets → snapshot. (force_refresh คงไว้เพื่อ compat เฉยๆ — ไม่มี web แล้ว)
     """
     # 1. Assets — Member + Live ครบทุกใบ (รวม alias key สำหรับ decklog card_no format)
     cards = load_from_assets_members()
     if cards:
         return _build_assets_index(cards), "assets"
 
-    # 2. Web refresh
-    if force_refresh:
-        try:
-            cards = fetch_card_index_from_web()
-            if cards:
-                return {c.card_no: c for c in cards}, "web"
-        except Exception:  # noqa: BLE001
-            pass
-
-    # 3. Snapshot fallback
+    # 2. Snapshot fallback
     index = load_card_index()
     if index:
         return index, "snapshot"

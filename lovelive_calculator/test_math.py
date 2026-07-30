@@ -155,7 +155,7 @@ def test_snapshot_to_requirement():
 
     cards = load_snapshot()
     if not cards:
-        print("⚠️  snapshot ว่าง — ข้าม test (รัน `python build_card_snapshot.py` ก่อน)")
+        print("⚠️  snapshot ว่าง — ข้าม test (ไม่มี data/live_cards.json)")
         return
     # every loaded card should convert to a valid LiveRequirement
     for c in cards:
