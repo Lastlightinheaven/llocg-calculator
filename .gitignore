@@ -45,3 +45,6 @@ lovelive_calculator/tools/*.xlsx
 
 # working file ของ keyword source — เก็บเฉพาะ PDF, ไม่เอา xlsx เข้า repo
 LL_Keyword.xlsx
+
+# source ไฟล์แปลข้อความการ์ด (xlsx ใหญ่) — import เข้า CardTextFix.json แล้ว ไม่เก็บใน repo
+lovelive_calculator/Assets/*.xlsx

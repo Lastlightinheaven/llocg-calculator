@@ -371,30 +371,38 @@ def _parse_score_plus(special_heart: str, text_card: str = "") -> int:
 
     Cases:
       'Score+1'         → 1  (format ตรงๆ)
-      'スコア' หรือ 'score' → ค้นหา 'Score +N' ใน text_card
+      'スコア' / 'score'  → ค้นหา 'Score +N' ใน text_card; ไม่เจอ → 1
+                          (bare score token = มี Score+ trigger, JSON เก็บเป็น score:1)
     """
     s = (special_heart or "").strip()
     # format ตรงๆ เช่น 'Score+1'
     m = re.match(r"Score\+(\d+)", s, re.IGNORECASE)
     if m:
         return int(m.group(1))
-    # format ภาษาญี่ปุ่น/lowercase → ค้นหาใน text_card
+    # format ภาษาญี่ปุ่น/lowercase → มี Score+ trigger
     if s in ("スコア", "score"):
         text = text_card if isinstance(text_card, str) else " ".join(text_card)
         m2 = re.search(r"Score\s*\+\s*(\d+)", text, re.IGNORECASE)
-        if m2:
-            return int(m2.group(1))
+        return int(m2.group(1)) if m2 else 1
     return 0
 
 
 def _coerce_int(v) -> int:
-    """DB เก็บ score เป็น int, str, หรือ ว่าง — ทำให้เป็น int เสมอ."""
+    """DB เก็บ score เป็น int, str, หรือ ว่าง — ทำให้เป็น int เสมอ.
+    รองรับ float string จาก CSV (เช่น '9.0' → 9)."""
     if v is None or v == "":
         return 0
     if isinstance(v, int):
         return v
+    s = str(v).strip()
+    if not s:
+        return 0
     try:
-        return int(str(v).strip())
+        return int(s)
+    except (ValueError, TypeError):
+        pass
+    try:
+        return int(float(s))
     except (ValueError, TypeError):
         return 0
 
@@ -522,6 +530,171 @@ def load_from_assets_live() -> List[LiveCard]:
     return cards
 
 
+# ---------------------------------------------------------------------------
+# Card List CSV loader (เฟส 1 — ขนานกับ JSON, ยังไม่สลับ priority)
+# ---------------------------------------------------------------------------
+
+# CSV เก็บ series เป็นชื่อเต็มญี่ปุ่น แต่ DB/UI ใช้ชื่อวง (Group) — แมพให้ตรง JSON เดิม
+_CSV_SERIES_TO_GROUP: Dict[str, str] = {
+    "ラブライブ！": "μ's",
+    "ラブライブ！サンシャイン!!": "Aqours",
+    "ラブライブ！虹ヶ咲学園スクールアイドル同好会": "虹ヶ咲",
+    "ラブライブ！スーパースター!!": "Liella!",
+    "蓮ノ空女学院スクールアイドルクラブ": "蓮ノ空",
+}
+
+# card_type ญี่ปุ่นใน CSV → tag ภายใน
+_CSV_TYPE_MAP: Dict[str, str] = {
+    "メンバー": "member",
+    "ライブ": "live",
+    "エネルギー": "energy",
+}
+
+
+def _csv_series_to_group(series: str) -> str:
+    """แปลง series ญี่ปุ่นจาก CSV → ชื่อวง (Group). multi-series (คั่นด้วย ,) เอาตัวแรก."""
+    s = (series or "").strip()
+    if not s:
+        return ""
+    first = s.split(",")[0].strip()
+    return _CSV_SERIES_TO_GROUP.get(first, first)
+
+
+def _parse_csv_trigger(blade_heart: str, special_heart: str) -> Tuple[Optional[Color], int]:
+    """
+    แปลง blade_heart + special_heart จาก CSV → (trigger_color, score_plus).
+
+    CSV blade_heart เก็บเป็นค่าเดี่ยว "ไม่มี colon" (ต่าง JSON ที่เป็น "green:1"):
+      "green" → Color.GREEN trigger
+      "all" / "[全ブレード]" → Color.ALL trigger
+      "スコア" / "score" → Non-Trigger + score+ (ดึงค่าจริงทีหลังจาก text/score ไม่ได้ที่นี่)
+      "" → Non-Trigger
+    special_heart อาจมี "draw" (ไม่ใช่ trigger) หรือ "score" — ไม่กระทบสี.
+    """
+    bh = (blade_heart or "").strip().lower()
+    trigger: Optional[Color] = None
+    score_plus = 0
+    if bh in ("all", "[全ブレード]".lower()):
+        trigger = Color.ALL
+    elif bh in ("score", "スコア"):
+        score_plus = 1  # มี score trigger — ค่าจริงมักระบุใน text แต่นับเป็น 1 อย่างน้อย
+    elif bh in _ASSETS_COLOR_MAP:
+        trigger = _ASSETS_COLOR_MAP[bh]
+    return trigger, score_plus
+
+
+def _normalize_unit(unit: str) -> str:
+    """
+    Normalize ชื่อ unit ให้เป็นรูปเดียว — CSV เก็บ full-width/half-width ปนกัน
+    ทำให้ filter เห็นเป็นคนละ unit เช่น 'みらくらぱーく！' vs 'みらくらぱーく!'.
+    แปลง full-width ! ！ / space 　 → half-width canonical.
+    """
+    return (unit or "").strip().replace("！", "!").replace("　", " ")
+
+
+def _iter_card_list_rows():
+    """yield dict ทุกแถวจากทุก CSV ใน Assets/Card List/ (encoding utf-8-sig)."""
+    if not ASSETS_CARD_LIST_DIR.exists():
+        return
+    import csv as _csv
+    for csv_path in sorted(ASSETS_CARD_LIST_DIR.glob("*.csv")):
+        try:
+            with csv_path.open(encoding="utf-8-sig", newline="") as f:
+                for row in _csv.DictReader(f):
+                    yield row
+        except Exception:  # noqa: BLE001
+            continue
+
+
+def load_from_card_list_csv() -> Tuple[List[DeckCard], List[LiveCard]]:
+    """
+    โหลดการ์ดทั้งหมดจาก Assets/Card List/*.csv (ผลผลิตจาก scraper).
+
+    คืน (deck_cards, live_cards):
+      - deck_cards = Member + Live + Energy (สำหรับ card_index)
+      - live_cards = เฉพาะ Live (สำหรับ live-card calculator)
+
+    CSV columns: card_name, card_name_eng, product, card_type, series, unit,
+      cost, base_heart, blade_heart, blade, rarity, card_no, required_heart,
+      special_heart, score, text_card, image
+
+    เฟส 1: ฟังก์ชันนี้ยังไม่ถูกเรียกใน get_card_index — ใช้เทียบผลกับ JSON ก่อน.
+    """
+    deck_cards: List[DeckCard] = []
+    live_cards: List[LiveCard] = []
+    seen_deck: set = set()
+    seen_live: set = set()
+
+    for row in _iter_card_list_rows():
+        card_no = normalize_card_no((row.get("card_no") or "").strip())
+        if not card_no:
+            continue
+        jp_type = (row.get("card_type") or "").strip()
+        tag = _CSV_TYPE_MAP.get(jp_type)
+        if tag is None:
+            continue
+
+        image = (row.get("image") or "").strip()
+        name_jp = (row.get("card_name") or "").strip()
+        # ชื่อ EN: Name mapping.json (curated) ชนะก่อน — คุมคุณภาพได้ + แก้ typo จาก scraper
+        # (เช่น "Mia Taylor20"). ถ้า mapping ไม่มี (แปลแล้วได้ค่าเดิม) → fallback card_name_eng
+        _translated = _translate_name(name_jp)
+        _csv_eng = (row.get("card_name_eng") or "").strip()
+        if _translated and _translated != name_jp:
+            name_en = _translated               # mapping มี → ใช้ค่า curated
+        else:
+            name_en = _csv_eng or name_jp       # ไม่มี mapping → ใช้ค่าจาก CSV
+        group = _csv_series_to_group(row.get("series", ""))
+
+        _sh = (row.get("special_heart") or "").strip()
+        _bh = (row.get("blade_heart") or "").strip()
+        _text = (row.get("text_card") or "").strip()
+        trigger_color, _ = _parse_csv_trigger(_bh, _sh)
+        # Score+ ปกติเก็บใน special_heart ("Score+1"/"score"/"スコア") แต่บางใบเก็บใน
+        # blade_heart (scraper ใส่ผิด column) — เช็คทั้งสอง
+        score_plus = _parse_score_plus(_sh, _text) or _parse_score_plus(_bh, _text)
+
+        # base_heart: member ใช้ base_heart, live ใช้ required_heart (Live ไม่มี base_heart)
+        _base = parse_required_heart(row.get("base_heart", "") or "")
+        if tag == "live" and not _base:
+            _base = parse_required_heart(row.get("required_heart", "") or "")
+
+        # --- DeckCard (ทุก type) ---
+        if card_no not in seen_deck:
+            seen_deck.add(card_no)
+            deck_cards.append(DeckCard(
+                name=name_en,
+                card_no=card_no,
+                card_type=tag,
+                trigger_color=trigger_color,
+                blade=_coerce_int(row.get("blade")),
+                base_heart=_base,
+                series=group,
+                unit=_normalize_unit(row.get("unit", "")),
+                cost=_coerce_int(row.get("cost")),
+                image=image,
+                name_alt=(name_jp if name_jp and name_jp != name_en else ""),
+            ))
+
+        # --- LiveCard (เฉพาะ live) ---
+        if tag == "live" and card_no not in seen_live:
+            seen_live.add(card_no)
+            live_cards.append(LiveCard(
+                name=name_en or name_jp,
+                card_no=card_no,
+                required_hearts=parse_required_heart(row.get("required_heart", "") or ""),
+                score=_coerce_int(row.get("score")),
+                score_plus=score_plus,
+                special_heart=_sh,
+                series=group,
+                product=(row.get("product") or "").strip(),
+                image=image,
+                name_alt=(name_jp if name_jp and name_jp != name_en else ""),
+            ))
+
+    return deck_cards, live_cards
+
+
 def load_from_assets_members() -> List[DeckCard]:
     """
     โหลด Member cards จาก Assets/MemberCardTable.json (UTF-16).
@@ -631,18 +804,25 @@ def load_card_index(path: Path = CARD_INDEX_PATH) -> Dict[str, DeckCard]:
 def get_live_cards(force_refresh: bool = False) -> Tuple[List[LiveCard], str]:
     """
     Return (cards, source_label). source_label is one of:
-        'assets'  — loaded from Assets/LiveCardTable.json (primary)
+        'csv'     — loaded from Assets/Card List/*.csv (primary)
+        'assets'  — loaded from Assets/LiveCardTable.json (fallback)
         'snapshot'— loaded from data/live_cards.json (fallback)
         'empty'   — all sources failed
 
-    Priority: Assets → snapshot. (force_refresh คงไว้เพื่อ compat เฉยๆ — ไม่มี web แล้ว)
+    Priority: Card List CSV → Assets JSON → snapshot.
+    (force_refresh คงไว้เพื่อ compat เฉยๆ — ไม่มี web แล้ว)
     """
-    # 1. Assets — primary source (ข้อมูลครบ, Score+ ถูกต้อง)
+    # 1. Card List CSV — DB หลัก (มี grey requirement ครบ, ข้อมูลถูกต้องกว่า JSON)
+    _, csv_live = load_from_card_list_csv()
+    if csv_live:
+        return csv_live, "csv"
+
+    # 2. Assets JSON — fallback
     cards = load_from_assets_live()
     if cards:
         return cards, "assets"
 
-    # 2. Snapshot fallback
+    # 3. Snapshot fallback
     cards = load_snapshot()
     if cards:
         return cards, "snapshot"
@@ -734,16 +914,39 @@ def _build_assets_index(cards: List[DeckCard]) -> Dict[str, DeckCard]:
     """
     text_map = load_card_text_th()
 
+    # index text_map ตาม base card_no → [(full_key, text), ...] เพื่อ fallback แม่นขึ้น
+    # (CardTextTH มี key ทั้งแบบ full rarity และ base ปนกัน — ต้องเลือก rarity หลัก)
+    _text_by_base: Dict[str, List[Tuple[str, str]]] = {}
+    for _k, _v in text_map.items():
+        _text_by_base.setdefault(strip_rarity_suffix(_k), []).append((_k, _v))
+
+    # ลำดับ rarity หลัก (ตรงกับ Deck Editor) — fallback เลือกตัวนี้ก่อน base key ดิบ
+    _rar_pri = ["P", "N", "L", "SD", "SD2", "PE", "CL", "DUO", "PR",
+                "PP", "RM", "R", "R+", "L+", "AR", "P+", "SEC"]
+    _rar_rank = {r: i for i, r in enumerate(_rar_pri)}
+
+    def _rar_of(key: str) -> str:
+        b = strip_rarity_suffix(key)
+        return key[len(b) + 1:] if key.startswith(b + "-") else ""
+
+    def _resolve_text(card_no: str) -> str:
+        # 1) full card_no ตรงตัว
+        if card_no in text_map:
+            return text_map[card_no]
+        # 2) fallback: เลือก text จาก sibling ที่ rarity เป็นหลักสุด (ไม่ใช่ base key ดิบมั่วๆ)
+        base = strip_rarity_suffix(card_no)
+        sibs = _text_by_base.get(base, [])
+        if not sibs:
+            return ""
+        # เรียง: rarity หลัก (rank ต่ำ) มาก่อน, base key (ไม่มี rarity) ไปท้ายสุด
+        best = min(sibs, key=lambda kv: _rar_rank.get(_rar_of(kv[0]), 998)
+                   if _rar_of(kv[0]) else 999)
+        return best[1]
+
     idx: Dict[str, DeckCard] = {}
     for card in cards:
-        # inject text_th — ลอง full card_no ก่อน แล้ว fallback ด้วย base (ไม่มี rarity)
         if not card.text_th:
-            base = strip_rarity_suffix(card.card_no)
-            card.text_th = (
-                text_map.get(card.card_no)
-                or text_map.get(base)
-                or ""
-            )
+            card.text_th = _resolve_text(card.card_no)
         # full card_no จาก CardSubInfo (เช่น PL!SP-bp1-005-P)
         if card.card_no not in idx:
             idx[card.card_no] = card
@@ -758,14 +961,20 @@ def get_card_index(force_refresh: bool = False) -> Tuple[Dict[str, DeckCard], st
     """
     Return (index, source_label) — index keyed by card_no.
 
-    Priority: Assets → snapshot. (force_refresh คงไว้เพื่อ compat เฉยๆ — ไม่มี web แล้ว)
+    Priority: Card List CSV → Assets JSON → snapshot.
+    (force_refresh คงไว้เพื่อ compat เฉยๆ — ไม่มี web แล้ว)
     """
-    # 1. Assets — Member + Live ครบทุกใบ (รวม alias key สำหรับ decklog card_no format)
+    # 1. Card List CSV — DB หลัก (ครบทุก type รวม Energy, ข้อมูลถูกต้องกว่า JSON)
+    csv_cards, _ = load_from_card_list_csv()
+    if csv_cards:
+        return _build_assets_index(csv_cards), "csv"
+
+    # 2. Assets JSON — fallback (Member + Live, ไม่มี Energy)
     cards = load_from_assets_members()
     if cards:
         return _build_assets_index(cards), "assets"
 
-    # 2. Snapshot fallback
+    # 3. Snapshot fallback
     index = load_card_index()
     if index:
         return index, "snapshot"

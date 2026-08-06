@@ -342,16 +342,44 @@ def _card_love_points(card_no: str) -> int:
     return m.get(card_no) or m.get(strip_rarity_suffix(card_no), 0)
 
 
+# ลำดับ rarity "หลัก" — การ์ดที่มีหลาย rarity จะโชว์ rarity ที่มาก่อนในลิสต์นี้ในกริด
+# (ปกติ/แรกของการ์ด ก่อน variant พิเศษ). ที่ไม่อยู่ในลิสต์ = ท้ายสุด
+_RARITY_PRIORITY = [
+    "P", "N", "L", "SD", "SD2", "PE", "CL", "DUO", "PR", "PP", "RM",
+    "R", "R+", "L+", "AR", "P+", "SEC", "SEC+", "PR+",
+]
+_RARITY_RANK = {r: i for i, r in enumerate(_RARITY_PRIORITY)}
+
+
+def _rarity_suffix(card_no: str) -> str:
+    base = strip_rarity_suffix(card_no)
+    return card_no[len(base) + 1:] if card_no.startswith(base + "-") else ""
+
+
 def _get_all_deck_cards() -> list[DeckCard]:
-    """Return unique DeckCard list from card_index (dedup by card_no)."""
+    """
+    Return unique DeckCard list from card_index — 1 ใบต่อ base card_no.
+    การ์ดที่มีหลาย rarity เลือก rarity หลัก (ตาม _RARITY_PRIORITY) มาเป็นตัวแทน.
+    (ดู rarity อื่นได้ในหน้ารายละเอียดการ์ด — dialog มีปุ่มสลับ rarity).
+    """
     idx: dict = st.session_state.get("card_index", {})
-    seen: set = set()
-    cards: list[DeckCard] = []
+    best: dict[str, DeckCard] = {}          # base_card_no → card ที่เลือกไว้
+    seen_full: set = set()
     for card in idx.values():
-        if card.card_no not in seen:
-            seen.add(card.card_no)
-            cards.append(card)
-    return cards
+        if card.card_no in seen_full:
+            continue
+        seen_full.add(card.card_no)
+        base = strip_rarity_suffix(card.card_no)
+        cur = best.get(base)
+        if cur is None:
+            best[base] = card
+            continue
+        # เทียบ rank: ต่ำกว่า = หลักกว่า (ไม่อยู่ในลิสต์ = อันดับท้ายสุด)
+        rank_new = _RARITY_RANK.get(_rarity_suffix(card.card_no), 999)
+        rank_cur = _RARITY_RANK.get(_rarity_suffix(cur.card_no), 999)
+        if rank_new < rank_cur:
+            best[base] = card
+    return list(best.values())
 
 
 def _render_decklog_export(entries: list[dict], total_cards: int) -> None:
