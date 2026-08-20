@@ -376,38 +376,36 @@ def _build_known_fixed_counts() -> dict:
     counts["all"] = 0
     counts["non"] = 0
     counts["score_plus_drawn"] = 0
-    for slot_prefix, slot_range in [("stage_slot_", range(3)), ("live_slot_", range(3))]:
-        for i in slot_range:
-            cn = st.session_state.get(f"{slot_prefix}{i}", "")
-            card = idx.get(cn) if cn else None
-            if not card:
-                continue
-            tc = card.trigger_color
-            if tc is None:
-                counts["non"] += 1
-                lc = live_lut.get(cn)
-                if lc and lc.score_plus > 0:
-                    counts["score_plus_drawn"] += 1
-            elif tc == Color.ALL:
-                counts["all"] += 1
-            elif tc.value in counts:
-                counts[tc.value] += 1
-    n_done = st.session_state.get("wr_done_live_count", 0)
-    for i in range(n_done):
-        cn = st.session_state.get(f"wr_done_live_{i}", "")
-        card = idx.get(cn) if cn else None
-        if not card:
-            continue
+    counts["grey_blade"] = 0
+
+    def _classify(cn: str, card) -> None:
+        lc = live_lut.get(cn)
+        # b_heart07 (greyblade) — นับแยก ไม่ปนกับ non/trigger
+        if lc and "greyblade" in (lc.special_heart or ""):
+            counts["grey_blade"] += 1
+            return
         tc = card.trigger_color
         if tc is None:
             counts["non"] += 1
-            lc = live_lut.get(cn)
             if lc and lc.score_plus > 0:
                 counts["score_plus_drawn"] += 1
         elif tc == Color.ALL:
             counts["all"] += 1
         elif tc.value in counts:
             counts[tc.value] += 1
+
+    for slot_prefix, slot_range in [("stage_slot_", range(3)), ("live_slot_", range(3))]:
+        for i in slot_range:
+            cn = st.session_state.get(f"{slot_prefix}{i}", "")
+            card = idx.get(cn) if cn else None
+            if card:
+                _classify(cn, card)
+    n_done = st.session_state.get("wr_done_live_count", 0)
+    for i in range(n_done):
+        cn = st.session_state.get(f"wr_done_live_{i}", "")
+        card = idx.get(cn) if cn else None
+        if card:
+            _classify(cn, card)
     return counts
 
 
@@ -428,6 +426,7 @@ def _build_unknown_pool() -> list[str]:
     deck_all = _dc.get("all", 0)
     sp_total = _dc.get("sp", _calc_deck_score_plus_count())
     non_plain = _dc.get("non_plain", 0)
+    grey_blade = _dc.get("grey_blade", 0)
 
     fixed = _build_known_fixed_counts()
     pool: list[str] = []
@@ -435,6 +434,7 @@ def _build_unknown_pool() -> list[str]:
         cnt = max(0, deck_colors[color] - fixed[color.value])
         pool.extend([color.value] * cnt)
     pool.extend(["all"] * max(0, deck_all - fixed["all"]))
+    pool.extend(["grey2"] * max(0, grey_blade - fixed.get("grey_blade", 0)))
     fixed_sp = fixed["score_plus_drawn"]
     fixed_non_plain = fixed["non"] - fixed_sp
     pool.extend(["non_sp"] * max(0, sp_total - fixed_sp))
@@ -452,10 +452,13 @@ def _sample_from_deck(n_draw: int) -> dict:
     counts["all"] = 0
     counts["non"] = 0
     counts["score_plus_drawn"] = 0
+    counts["grey_blade"] = 0
     for card in drawn:
         if card == "non_sp":
             counts["non"] += 1
             counts["score_plus_drawn"] += 1
+        elif card == "grey2":
+            counts["grey_blade"] += 1
         else:
             counts[card] += 1
     return counts
@@ -468,6 +471,7 @@ def _merge_wr_counts(*count_dicts) -> dict:
     result["all"] = 0
     result["non"] = 0
     result["score_plus_drawn"] = 0
+    result["grey_blade"] = 0
     for d in count_dicts:
         for k in result:
             result[k] = result.get(k, 0) + d.get(k, 0)
@@ -485,6 +489,7 @@ def _apply_wr_counts_to_state(counts: dict) -> None:
     st.session_state["wr_purple"] = counts[Color.PURPLE.value]
     st.session_state["wr_pink"]   = counts[Color.PINK.value]
     st.session_state["wr_all"]    = counts["all"]
+    st.session_state["wr_grey_blade"] = counts.get("grey_blade", 0)
     sp_drawn = counts.get("score_plus_drawn", 0)
     st.session_state["wr_non_plain"] = max(0, counts["non"] - sp_drawn)
 
@@ -602,6 +607,7 @@ def _apply_deck_composition(dc: DeckComposition) -> None:
         "all":       dc.all_trigger,
         "non_plain": dc.non_trigger - dc.score_plus_count,
         "sp":        dc.score_plus_count,
+        "grey_blade": dc.grey_blade,
     }
 
 
@@ -1529,6 +1535,7 @@ with st.sidebar:
     deck_non_plain = _dc.get("non_plain", 0)
     deck_sp     = _dc.get("sp", 0)
     deck_non    = deck_non_plain + deck_sp
+    deck_grey_blade = _dc.get("grey_blade", 0)
 
     _has_deck = bool(_dc)
 
@@ -1556,6 +1563,8 @@ with st.sidebar:
         st.caption("— ยังไม่มี deck")
     else:
         _deck_row(f"{icons.bladeheart(Color.ALL) or COLOR_EMOJI[Color.ALL]} All Trigger (wildcard)", deck_all)
+        if deck_grey_blade:
+            _deck_row("🩶🩶 Blade Heart (grey ×2)", deck_grey_blade)
         _deck_row(f"{icons.bladeheart_none() or '⬛'} Non-Trigger (ธรรมดา)", deck_non_plain)
         _deck_row(f"{icons.score() or '⭐'} Score+ Live ใน Deck", deck_sp)
 
@@ -1567,6 +1576,7 @@ with st.sidebar:
         all_trigger=deck_all,
         non_trigger=deck_non,
         score_plus_count=deck_sp,
+        grey_blade=deck_grey_blade,
     )
 
     total = deck.total()
@@ -1975,6 +1985,7 @@ if _has_deck:
         all_trigger=wr_all,
         non_trigger=wr_non,
         score_plus_count=wr_sp_count,
+        grey_blade=int(st.session_state.get("wr_grey_blade", 0) or 0),
     )
     wr_total = waiting.total()
     _hand_n = _current_hand_n
@@ -2061,6 +2072,7 @@ else:
             all_trigger=wr_all,
             non_trigger=wr_non,
             score_plus_count=wr_sp_manual,
+            grey_blade=int(st.session_state.get("wr_grey_blade", 0) or 0),
         )
         wr_total = waiting.total()
         _all_out = wr_total
@@ -2244,6 +2256,9 @@ _reshuffle_pool = WaitingRoom(
                     - _hand_non_total
                     - _fixed_trigger.get("non", 0)),
     score_plus_count=max(0, waiting.score_plus_count - _hand_sp),
+    grey_blade=max(0, waiting.grey_blade
+                   - _hand_sample.get("grey_blade", 0)
+                   - _fixed_trigger.get("grey_blade", 0)),
 )
 state = GameState(deck=deck, waiting_room=waiting, stage=stage, lives=lives, reshuffle_pool=_reshuffle_pool)
 

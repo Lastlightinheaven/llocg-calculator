@@ -63,6 +63,7 @@ def _build_card_list(composition, extra_exclude: List[str] | None = None) -> Lis
     for color in Color.trigger_colors():
         cards.extend([color.value] * composition.count(color))
     cards.extend(["all"] * composition.all_trigger)
+    cards.extend(["grey2"] * getattr(composition, "grey_blade", 0))  # b_heart07 → wildcard ×2
     cards.extend(["non"] * composition.non_trigger)
     if extra_exclude:
         for tag in extra_exclude:
@@ -136,6 +137,8 @@ def simulate_live(state: GameState, trials: int = 20000, seed: int | None = None
         for tag in yelled:
             if tag == "all":
                 all_drawn += 1
+            elif tag == "grey2":       # b_heart07 → wildcard heart ×2
+                all_drawn += 2
             elif tag != "non":
                 color = Color(tag)
                 drawn[color] = drawn.get(color, 0) + 1

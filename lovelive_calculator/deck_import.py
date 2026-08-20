@@ -232,18 +232,23 @@ def compose_deck_from_entries(
     trigger_counts: Dict[Color, int] = {c: 0 for c in Color.trigger_colors()}
     all_trigger = 0
     non_trigger = 0
+    grey_blade = 0
     warnings: List[str] = []
     total_counted = 0
 
-    # Build Score+ lookup: card_no → score_plus value
+    # Build Score+ / grey-blade lookup: card_no → value
     # เก็บทั้ง full card_no และ base (ตัด rarity) เพราะ decklog อาจส่ง rarity ต่างจาก Assets
-    # (เช่น decklog: PL!SP-sd2-023-SD2 แต่ Assets เก็บ PL!SP-sd2-023-P) — Score+ ไม่ขึ้นกับ rarity
+    # (เช่น decklog: PL!SP-sd2-023-SD2 แต่ Assets เก็บ PL!SP-sd2-023-P) — ไม่ขึ้นกับ rarity
     sp_lookup: Dict[str, int] = {}
+    gb_lookup: set = set()   # card_no ที่เป็น b_heart07 (greyblade)
     if live_cards:
         for lc in live_cards:
             if lc.score_plus > 0:
                 sp_lookup[lc.card_no] = lc.score_plus
                 sp_lookup.setdefault(strip_rarity_suffix(lc.card_no), lc.score_plus)
+            if "greyblade" in (lc.special_heart or ""):
+                gb_lookup.add(lc.card_no)
+                gb_lookup.add(strip_rarity_suffix(lc.card_no))
 
     score_plus_count = 0
 
@@ -255,8 +260,12 @@ def compose_deck_from_entries(
             warnings.append(f"ไม่พบ card_no ใน DB: {e.card_no} (×{e.count})")
             continue
         total_counted += e.count
+        # b_heart07 (greyblade) — ตอน Yell ให้ wildcard ×2, นับแยกจาก non/trigger
+        is_grey_blade = e.card_no in gb_lookup or strip_rarity_suffix(e.card_no) in gb_lookup
         tc = card.trigger_color
-        if tc is None:
+        if is_grey_blade:
+            grey_blade += e.count
+        elif tc is None:
             non_trigger += e.count
         elif tc == Color.ALL:
             all_trigger += e.count
@@ -277,6 +286,7 @@ def compose_deck_from_entries(
         all_trigger=all_trigger,
         non_trigger=non_trigger,
         score_plus_count=score_plus_count,
+        grey_blade=grey_blade,
     )
     if total_counted != 60:
         warnings.append(

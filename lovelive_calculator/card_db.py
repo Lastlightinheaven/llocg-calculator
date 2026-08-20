@@ -572,6 +572,10 @@ def _parse_csv_trigger(blade_heart: str, special_heart: str) -> Tuple[Optional[C
     special_heart อาจมี "draw" (ไม่ใช่ trigger) หรือ "score" — ไม่กระทบสี.
     """
     bh = (blade_heart or "").strip().lower()
+    # b_heart07 = Blade Heart แบบพิเศษ — ตอน Yell เจอ ให้หัวใจเทา 2 ดวง (ไม่ใช่ trigger สี)
+    # ไม่ใช่ trigger_color → คืน None ที่นี่ (grey:2 จัดการแยกใน loader ผ่าน special_heart)
+    if bh in ("b_heart07", "heart07", "b_heart7", "heart7"):
+        return None, 0
     trigger: Optional[Color] = None
     score_plus = 0
     if bh in ("all", "[全ブレード]".lower()):
@@ -653,6 +657,10 @@ def load_from_card_list_csv() -> Tuple[List[DeckCard], List[LiveCard]]:
         # Score+ ปกติเก็บใน special_heart ("Score+1"/"score"/"スコア") แต่บางใบเก็บใน
         # blade_heart (scraper ใส่ผิด column) — เช็คทั้งสอง
         score_plus = _parse_score_plus(_sh, _text) or _parse_score_plus(_bh, _text)
+        # b_heart07 = Blade Heart พิเศษ: เมื่อ Yell เจอ ให้หัวใจเทา 2 ดวง (grey:2)
+        # เก็บใน special_heart เป็น "greyblade:2" เพื่อให้ Calculator นำไปคิด heart pool
+        if _bh.lower() in ("b_heart07", "heart07", "b_heart7", "heart7"):
+            _sh = (_sh + ", greyblade:2").strip(", ") if _sh else "greyblade:2"
 
         # base_heart: member ใช้ base_heart, live ใช้ required_heart (Live ไม่มี base_heart)
         _base = parse_required_heart(row.get("base_heart", "") or "")
@@ -933,8 +941,11 @@ def _build_assets_index(cards: List[DeckCard]) -> Dict[str, DeckCard]:
         # 1) full card_no ตรงตัว
         if card_no in text_map:
             return text_map[card_no]
-        # 2) fallback: เลือก text จาก sibling ที่ rarity เป็นหลักสุด (ไม่ใช่ base key ดิบมั่วๆ)
         base = strip_rarity_suffix(card_no)
+        # 2) base card_no ตรงตัวใน text_map (CardTextTH เก็บ text ที่ base key เช่น PL!SP-pb2-001)
+        if base in text_map:
+            return text_map[base]
+        # 3) fallback: เลือก text จาก sibling ที่ rarity เป็นหลักสุด (ไม่ใช่ base key ดิบมั่วๆ)
         sibs = _text_by_base.get(base, [])
         if not sibs:
             return ""

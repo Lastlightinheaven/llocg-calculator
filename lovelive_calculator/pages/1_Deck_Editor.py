@@ -1057,20 +1057,24 @@ with col_deck:
     _non_trig = 0
     _sp_count = 0
     _draw_count = 0
+    _grey_blade_count = 0
     live_lut = {c.card_no: c for c in st.session_state.get("live_cards", [])}
     for e in entries:
         card = _lookup_card(e["card_no"])
         if card is None:
             _non_trig += e["count"]
             continue
+        lc = live_lut.get(card.card_no) or live_lut.get(strip_rarity_suffix(card.card_no))
         tc = card.trigger_color
-        if tc in (Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.PURPLE, Color.PINK):
+        # b_heart07 (greyblade) — Yell เจอ ให้ wildcard ×2, นับแยกจาก non/trigger
+        if lc and "greyblade" in (lc.special_heart or ""):
+            _grey_blade_count += e["count"]
+        elif tc in Color.trigger_colors():
             _trig_counts[tc] = _trig_counts.get(tc, 0) + e["count"]
         elif tc == Color.ALL:
             _trig_counts[Color.ALL] = _trig_counts.get(Color.ALL, 0) + e["count"]
         else:
             _non_trig += e["count"]
-        lc = live_lut.get(card.card_no) or live_lut.get(strip_rarity_suffix(card.card_no))
         if lc and lc.score_plus > 0:
             _sp_count += e["count"]
         # Draw trigger — assets เก็บ special_heart เป็น "blue:1, draw:1" ฯลฯ (draw มากับสี)
@@ -1101,6 +1105,9 @@ with col_deck:
     chips_html += _chip(icons.bladeheart_none() or "⬛", "Non", _non_val)
     chips_html += _chip(_SCORE_ICON, "Score+", _sp_count)
     chips_html += _chip(icons.draw() or "🃏", "Draw", _draw_count)
+    # b_heart07 — Blade Heart ที่ให้หัวใจเทา ×2 (แสดงเฉพาะเมื่อมีในเด็ค)
+    if _grey_blade_count:
+        chips_html += _chip("🩶🩶", "Grey Blade", _grey_blade_count)
 
     st.markdown(
         f'<div class="trigger-grid">'

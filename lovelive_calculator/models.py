@@ -68,10 +68,12 @@ class DeckComposition:
     all_trigger: int = 0
     non_trigger: int = 0
     score_plus_count: int = 0  # Live cards in deck that have Score+ effect
+    grey_blade: int = 0        # b_heart07 — ตอน Yell เจอ ให้ wildcard heart ×2 (คนละหมวด all)
 
     def total(self) -> int:
         """Total card count — should be 60 for a legal deck."""
-        return sum(self.trigger_counts.values()) + self.all_trigger + self.non_trigger
+        return (sum(self.trigger_counts.values())
+                + self.all_trigger + self.non_trigger + self.grey_blade)
 
     def count(self, color: Color) -> int:
         """Get count of a specific category. Color.ALL -> all_trigger."""
@@ -92,6 +94,8 @@ class DeckComposition:
             errors.append("All Trigger เป็นลบไม่ได้")
         if self.non_trigger < 0:
             errors.append("Non-Trigger เป็นลบไม่ได้")
+        if self.grey_blade < 0:
+            errors.append("Grey Blade เป็นลบไม่ได้")
         return errors
 
 
@@ -105,9 +109,11 @@ class WaitingRoom:
     all_trigger: int = 0
     non_trigger: int = 0
     score_plus_count: int = 0  # Score+ Live cards that have left the deck
+    grey_blade: int = 0        # b_heart07 ที่ออกจากเด็คแล้ว
 
     def total(self) -> int:
-        return sum(self.trigger_counts.values()) + self.all_trigger + self.non_trigger
+        return (sum(self.trigger_counts.values())
+                + self.all_trigger + self.non_trigger + self.grey_blade)
 
     def count(self, color: Color) -> int:
         if color == Color.ALL:
@@ -181,6 +187,7 @@ class GameState:
             non_trigger=_remaining_non,
             # Score+ ไม่สามารถมากกว่า Non-trigger ที่เหลือ
             score_plus_count=min(_remaining_sp, _remaining_non),
+            grey_blade=max(0, self.deck.grey_blade - self.waiting_room.grey_blade),
         )
         for color in Color.trigger_colors():
             remaining.trigger_counts[color] = max(
