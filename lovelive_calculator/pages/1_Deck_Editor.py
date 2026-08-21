@@ -316,6 +316,7 @@ def _apply_deck_composition(dc: DeckComposition) -> None:
         "all":       dc.all_trigger,
         "non_plain": dc.non_trigger - dc.score_plus_count,
         "sp":        dc.score_plus_count,
+        "grey_blade": dc.grey_blade,
     }
     # ล้าง hand/WR keys เพื่อให้ app.py fingerprint ใหม่แล้วสร้าง widgets ใหม่
     for _k in list(st.session_state.keys()):

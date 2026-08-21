@@ -100,6 +100,10 @@ def calculate_live_success_probability(state: GameState) -> ProbabilityResult:
 
     all_idx = len(categories)
     categories.append(("all", remaining.all_trigger))
+    # grey_blade (b_heart07) — ตอน Yell เจอ 1 ใบ ให้ wildcard heart ×2
+    # ต้องเป็น category แยกเพื่อให้ผลรวม pool = N (ไม่งั้น comb(N, draws) ใหญ่เกิน)
+    grey_idx = len(categories)
+    categories.append(("grey2", remaining.grey_blade))
     non_idx = len(categories)
     categories.append(("non", remaining.non_trigger))
 
@@ -168,7 +172,9 @@ def _is_favorable(
     non_drawn = 0
     for (cat_name, _cat_size), taken in zip(categories, drawn_per_cat):
         if cat_name == "all":
-            all_drawn = taken
+            all_drawn += taken
+        elif cat_name == "grey2":
+            all_drawn += taken * 2   # b_heart07 → wildcard heart ×2
         elif cat_name == "non":
             non_drawn = taken
         else:
@@ -367,6 +373,7 @@ def compute_non_trigger_sensitivity(
             all_trigger=new_all_wr,
             non_trigger=non_wr,
             score_plus_count=state.waiting_room.score_plus_count,
+            grey_blade=state.waiting_room.grey_blade,
         )
         modified_state = GameState(
             deck=state.deck,
